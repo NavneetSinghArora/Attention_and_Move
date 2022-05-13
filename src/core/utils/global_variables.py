@@ -21,7 +21,7 @@ class GlobalVariables:
 
         if not self.__instance_created:
             self.global_properties = {'root_directory': kwargs['package_root']}
-            self.global_properties['global_configurations'] = join(self.global_properties['root_directory'], 'resources/model/configuration.properties')
+            self.global_properties['global_configurations'] = join(self.global_properties['root_directory'], 'resources/project/configuration.properties')
 
             self.load_properties = LoadProperties(self.global_properties)
 
