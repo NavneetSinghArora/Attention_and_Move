@@ -61,7 +61,7 @@ class Environment:
 
     def start(self) -> None:
         # self.__controller.start()
-        print(type(self.__controller.last_event))
+        # print(type(self.__controller.last_event))
         # print(self.__controller.last_event.events)
         # rgb_frames = [event.frame for event in self.__controller.last_event.events]
 
