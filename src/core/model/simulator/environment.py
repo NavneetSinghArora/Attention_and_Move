@@ -29,23 +29,23 @@ class Environment:
         self._started = False
 
         if not self.__instance_created:
-            __controller = Controller(platform=CloudRendering,
+            self.__controller = Controller(platform=CloudRendering,
 
-                                      agentCount=int(self.simulator_properties['number_of_agents']),
-                                      agentMode=self.simulator_properties['agent_mode'],
-                                      visibilityDistance=float(self.simulator_properties['visibility_distance']),
-                                      scene=self.simulator_properties['floor_scene'],
+                                           agentCount=int(self.simulator_properties['number_of_agents']),
+                                           agentMode=self.simulator_properties['agent_mode'],
+                                           visibilityDistance=float(self.simulator_properties['visibility_distance']),
+                                           scene=self.simulator_properties['floor_scene'],
 
-                                      gridSize=float(self.simulator_properties['grid_size']),
-                                      snapToGrid=True,
-                                      rotateStepDegrees=90,
+                                           gridSize=float(self.simulator_properties['grid_size']),
+                                           snapToGrid=True,
+                                           rotateStepDegrees=90,
 
-                                      renderDepthImage=bool(self.simulator_properties['render_depth_image']),
-                                      renderInstanceSegmentation=bool(self.simulator_properties['render_image_segmentation']),
+                                           renderDepthImage=bool(self.simulator_properties['render_depth_image']),
+                                           renderInstanceSegmentation=bool(self.simulator_properties['render_image_segmentation']),
 
-                                      width=300,
-                                      height=300,
-                                      fieldOfView=int(self.simulator_properties['field_of_view']))
+                                           width=300,
+                                           height=300,
+                                           fieldOfView=int(self.simulator_properties['field_of_view']))
 
             self.__instance_created = True
 
@@ -61,9 +61,9 @@ class Environment:
 
     def start(self) -> None:
         # self.__controller.start()
-        # print(type(self.__controller.last_event))
-        # print(self.__controller.last_event.events)
-        # rgb_frames = [event.frame for event in self.__controller.last_event.events]
+        print(type(self.__controller.last_event))
+        print(self.__controller.last_event.events)
+        rgb_frames = [event.frame for event in self.__controller.last_event.events]
 
         def visualize_frames(rgb_frames, title, figsize) -> plt.Figure:
             """Plots the rgb_frames for each agent."""
