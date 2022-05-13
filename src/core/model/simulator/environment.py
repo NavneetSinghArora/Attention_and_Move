@@ -3,12 +3,10 @@
 """
 
 # Importing python libraries for required processing
-import ai2thor.server
 from ai2thor.controller import Controller
 from ai2thor.platform import CloudRendering
-import numpy as np
-from typing import Tuple, List
-import matplotlib.pyplot as plt
+from src.core.services.common_services import visualize_frames
+import random
 
 
 class Environment:
@@ -20,11 +18,12 @@ class Environment:
     __instance_created = False
     __controller: Controller = None
 
-    def __init__(self, simulator_properties):
+    def __init__(self, global_properties, simulator_properties):
         """
         This method makes sure that the properties are initialized only once in lifetime of this object.
         """
 
+        self.global_properties = global_properties
         self.simulator_properties = simulator_properties
         self._started = False
 
@@ -59,33 +58,28 @@ class Environment:
 
         return cls.__instance
 
-    def start(self) -> None:
-        print(type(self.__controller.last_event))
-        print(self.__controller.last_event.events)
+    def randomize_agents(self) -> None:
+        all_possible_positions = self.__controller.step(action="GetReachablePositions").metadata["actionReturn"]
+        agent_positions = random.choices(all_possible_positions, k=2)
+        self.__controller.step(action="Teleport", position=agent_positions[0], agentId=0)
+        self.__controller.step(action="Teleport", position=agent_positions[1], agentId=1)
 
-        def visualize_frames(rgb_frames, title, figsize, move_number) -> plt.Figure:
-            """Plots the rgb_frames for each agent."""
-            fig, axs = plt.subplots(1, len(rgb_frames), figsize=figsize, facecolor='white', dpi=300)
-            for i, frame in enumerate(rgb_frames):
-                ax = axs[i]
-                ax.imshow(frame)
-                ax.set_title(f'AgentId: {i}', fontname='Andale Mono')
-                ax.axis('off')
-                plt.savefig(str(move_number) + '_' + str(i) + 'my_plot.png')
+    def start(self) -> None:
+        # Randomizing the position of the agents before starting with any episode
+        self.randomize_agents()
 
         for i in range(0,11):
             event_0 = self.__controller.step('RotateLeft', agentId=0)
             event_1 = self.__controller.step('RotateRight', agentId=1)
 
-            for j, mutli_agent_event in enumerate([event_0, event_1]):
-                rgb_frames = [event.frame for event in mutli_agent_event.events]
-                visualize_frames(rgb_frames, f'After Action {j}', (8, 8), i)
+            for j, multi_agent_event in enumerate([event_0, event_1]):
+                rgb_frames = [event.frame for event in multi_agent_event.events]
+                visualize_frames(rgb_frames, (8, 8), i, self.global_properties['root_directory'])
 
         self._started = True
 
-    def stop(self) -> None:
-        self.__controller.stop()
-        self._started = False
+    def stop(self):
+        return self.__controller.step(action="Done")
 
     def reset(self):
         return self.__controller.reset()

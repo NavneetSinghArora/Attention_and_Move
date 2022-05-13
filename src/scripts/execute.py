@@ -40,15 +40,17 @@ def initialize_simulator(global_properties):
     return simulator_properties
 
 
-def initialize_environment(simulator_properties):
+def initialize_environment(global_properties, simulator_properties):
     """
 
+    :param global_properties:
+    :type global_properties:
     :param simulator_properties:
     :type simulator_properties:
     :return:
     :rtype:
     """
-    environment = Environment(simulator_properties)
+    environment = Environment(global_properties, simulator_properties)
     return environment
 
 
@@ -77,15 +79,17 @@ def cli(**kwargs):
     click.echo("\nThis is the command line interface of Attention_and_Move. Type 'attention_and_move --help' for details.\n")
 
 
-@cli.command('start', context_settings=CONTEXT_SETTINGS)
+@cli.command('training', context_settings=CONTEXT_SETTINGS)
+@click.option('-s', '--start', help='This is a flag to start the training and agent movements')
 def start_environment(**kwargs):
     global_variables = GlobalVariables(**kwargs)
     global_properties = global_variables.global_properties
 
     simulator_properties = initialize_simulator(global_properties)
-    environment = initialize_environment(simulator_properties)
+    environment = initialize_environment(global_properties, simulator_properties)
 
-    environment.start()
+    if kwargs['start']:
+        environment.start()
 
 
 if __name__ == '__main__':
