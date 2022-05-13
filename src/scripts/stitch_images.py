@@ -11,11 +11,11 @@ input_images_directory = "/export2/scratch/cv_proj_team1/Attention_and_Move/outp
 output_gif_directory = "/export2/scratch/cv_proj_team1/Attention_and_Move/output/agent_movements/multi_agent_movements.gif"
 
 # Processing the images to create the sequence
-step_images = (Image.open(f) for f in sorted(glob.glob(input_images_directory)))
-step = next(step_images)
-step.save(fp=output_gif_directory,
-          format='GIF',
-          append_images=step,
-          save_all=True,
-          duration=1000,
-          loop=0)
+imgs = (Image.open(f) for f in sorted(glob.glob(input_images_directory)))
+img = next(imgs)
+img.save(fp=output_gif_directory,
+         format='GIF',
+         append_images=imgs,
+         save_all=True,
+         duration=1000,
+         loop=0)
