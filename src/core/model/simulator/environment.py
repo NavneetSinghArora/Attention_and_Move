@@ -62,8 +62,8 @@ class Environment:
     def start(self) -> None:
         # self.__controller.start()
         print(type(self.__controller.last_event))
-        print(self.__controller.last_event.events)
-        rgb_frames = [event.frame for event in self.__controller.last_event.events]
+        # print(self.__controller.last_event.events)
+        # rgb_frames = [event.frame for event in self.__controller.last_event.events]
 
         def visualize_frames(rgb_frames, title, figsize) -> plt.Figure:
             """Plots the rgb_frames for each agent."""
