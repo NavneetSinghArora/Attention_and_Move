@@ -38,7 +38,7 @@ class Environment:
 
                                            gridSize=float(self.simulator_properties['grid_size']),
                                            snapToGrid=True,
-                                           rotateStepDegrees=90,
+                                           rotateStepDegrees=30,
 
                                            renderDepthImage=bool(self.simulator_properties['render_depth_image']),
                                            renderInstanceSegmentation=bool(self.simulator_properties['render_image_segmentation']),
@@ -60,12 +60,10 @@ class Environment:
         return cls.__instance
 
     def start(self) -> None:
-        # self.__controller.start()
         print(type(self.__controller.last_event))
         print(self.__controller.last_event.events)
-        rgb_frames = [event.frame for event in self.__controller.last_event.events]
 
-        def visualize_frames(rgb_frames, title, figsize) -> plt.Figure:
+        def visualize_frames(rgb_frames, title, figsize, move_number) -> plt.Figure:
             """Plots the rgb_frames for each agent."""
             fig, axs = plt.subplots(1, len(rgb_frames), figsize=figsize, facecolor='white', dpi=300)
             for i, frame in enumerate(rgb_frames):
@@ -73,14 +71,15 @@ class Environment:
                 ax.imshow(frame)
                 ax.set_title(f'AgentId: {i}', fontname='Andale Mono')
                 ax.axis('off')
-                plt.savefig(str(i) + 'my_plot.png')
+                plt.savefig(str(move_number) + '_' + str(i) + 'my_plot.png')
 
-        event_0 = self.__controller.step('MoveBack', agentId=0)
-        event_1 = self.__controller.step('RotateRight', agentId=1)
+        for i in range(0,11):
+            event_0 = self.__controller.step('RotateLeft', agentId=0)
+            event_1 = self.__controller.step('RotateRight', agentId=1)
 
-        for i, mutli_agent_event in enumerate([event_0, event_1]):
-            rgb_frames = [event.frame for event in mutli_agent_event.events]
-            visualize_frames(rgb_frames, f'After Action {i}', (8, 8))
+            for j, mutli_agent_event in enumerate([event_0, event_1]):
+                rgb_frames = [event.frame for event in mutli_agent_event.events]
+                visualize_frames(rgb_frames, f'After Action {j}', (8, 8), i)
 
         self._started = True
 
