@@ -80,7 +80,7 @@ def cli(**kwargs):
 
 
 @cli.command('training', context_settings=CONTEXT_SETTINGS)
-@click.option('-s', '--start', help='This is a flag to start the training and agent movements')
+@click.option('-s', '--start', is_flag=True, help='This is a flag to start the training and agent movements')
 def start_environment(**kwargs):
     global_variables = GlobalVariables(**kwargs)
     global_properties = global_variables.global_properties
