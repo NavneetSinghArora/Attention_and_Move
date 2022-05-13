@@ -60,7 +60,28 @@ class Environment:
         return cls.__instance
 
     def start(self) -> None:
-        self.__controller.start()
+        # self.__controller.start()
+        print(type(self.__controller.last_event))
+        print(self.__controller.last_event.events)
+        rgb_frames = [event.frame for event in self.__controller.last_event.events]
+
+        def visualize_frames(rgb_frames, title, figsize) -> plt.Figure:
+            """Plots the rgb_frames for each agent."""
+            fig, axs = plt.subplots(1, len(rgb_frames), figsize=figsize, facecolor='white', dpi=300)
+            for i, frame in enumerate(rgb_frames):
+                ax = axs[i]
+                ax.imshow(frame)
+                ax.set_title(f'AgentId: {i}', fontname='Andale Mono')
+                ax.axis('off')
+                plt.savefig(str(i) + 'my_plot.png')
+
+        event_0 = self.__controller.step('MoveBack', agentId=0)
+        event_1 = self.__controller.step('RotateRight', agentId=1)
+
+        for i, mutli_agent_event in enumerate([event_0, event_1]):
+            rgb_frames = [event.frame for event in mutli_agent_event.events]
+            visualize_frames(rgb_frames, f'After Action {i}', (8, 8))
+
         self._started = True
 
     def stop(self) -> None:
