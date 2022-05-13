@@ -84,11 +84,16 @@ def cli(**kwargs):
 def start_environment(**kwargs):
     global_variables = GlobalVariables(**kwargs)
     global_properties = global_variables.global_properties
+    print('Project Properties Initialized')
 
     simulator_properties = initialize_simulator(global_properties)
+    print('Simulator Properties Initialized')
+
     environment = initialize_environment(global_properties, simulator_properties)
+    print('Simulator Environment Initialized')
 
     if kwargs['start']:
+        print('Staring the environment')
         environment.start()
 
 

@@ -67,8 +67,11 @@ class Environment:
     def start(self) -> None:
         # Randomizing the position of the agents before starting with any episode
         self.randomize_agents()
+        print('Agent Positions Randomized')
 
-        for i in range(0,11):
+        print('Staring with the Agent Movements')
+        for i in range(0, 12):
+            print(f"Making Agent Movement: {i}")
             event_0 = self.__controller.step('RotateLeft', agentId=0)
             event_1 = self.__controller.step('RotateRight', agentId=1)
 

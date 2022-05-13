@@ -11,4 +11,5 @@ def visualize_frames(rgb_frames, figsize, move_number, root_directory):
         ax.set_title(f'AgentId: {i}', fontname='Andale Mono')
         ax.axis('off')
         if i == 1:
+            print('Capturing the RGB Frame for the agents')
             plt.savefig(join(root_directory, 'output/agent_movements/' + 'Move_' + str(move_number) + '_.png'))
