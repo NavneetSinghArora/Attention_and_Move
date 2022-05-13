@@ -7,8 +7,8 @@ from PIL import Image
 import glob
 
 # Input and Output directory for processing
-input_images_directory = "*.png"
-output_gif_directory = "multi_agent_movements.gif"
+input_images_directory = "/export2/scratch/cv_proj_team1/Attention_and_Move/output/agent_movements/*.png"
+output_gif_directory = "/export2/scratch/cv_proj_team1/Attention_and_Move/output/agent_movements/multi_agent_movements.gif"
 
 # Processing the images to create the sequence
 step_images = (Image.open(f) for f in sorted(glob.glob(input_images_directory)))
