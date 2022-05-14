@@ -13,3 +13,12 @@ def visualize_frames(rgb_frames, figsize, move_number, root_directory):
         if i == 1:
             print('Capturing the RGB Frame for the agents')
             plt.savefig(join(root_directory, 'output/agent_movements/' + 'Move_' + str(move_number) + '_.png'))
+
+
+# def locate_object_in_frame(rgb_frames, frame_objects, target_object) -> bool:
+#
+#     return True
+
+# def rotate_agent(_agentId):
+#
+#     event_0 = self.__controller.step('RotateLeft', agentId=_agentId)

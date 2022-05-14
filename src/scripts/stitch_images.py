@@ -17,5 +17,5 @@ img.save(fp=output_gif_directory,
          format='GIF',
          append_images=imgs,
          save_all=True,
-         duration=1000,
+         duration=300,
          loop=0)
