@@ -1,3 +1,4 @@
+from os import makedirs
 from os.path import join
 import matplotlib.pyplot as plt
 
@@ -12,7 +13,11 @@ def visualize_frames(rgb_frames, figsize, move_number, root_directory):
         ax.axis('off')
         if i == 1:
             print('Capturing the RGB Frame for the agents')
-            plt.savefig(join(root_directory, 'output/agent_movements/' + 'Move_' + str(move_number) + '_.png'))
+            try:
+                makedirs("output/agent_movements/", exist_ok=True)  # makes sure folder exists
+                plt.savefig(join(root_directory, 'output/agent_movements/' + 'Move_' + str(move_number) + '_.png'))
+            except FileExistsError:
+                pass
 
 
 # def locate_object_in_frame(rgb_frames, frame_objects, target_object) -> bool:
