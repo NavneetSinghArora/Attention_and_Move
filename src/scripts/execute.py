@@ -80,6 +80,7 @@ def cli(**kwargs):
 
 
 @cli.command('training', context_settings=CONTEXT_SETTINGS)
+@click.option('-p', '--platform', is_flag=False, default='CloudRendering', show_default=True, help='Choose between CloudRendering, Linux64, OSXIntel64')
 @click.option('-s', '--start', is_flag=True, help='This is a flag to start the training and agent movements')
 def start_environment(**kwargs):
     global_variables = GlobalVariables(**kwargs)
@@ -89,13 +90,16 @@ def start_environment(**kwargs):
     simulator_properties = initialize_simulator(global_properties)
     print('Simulator Properties Initialized')
 
+    if kwargs['platform']:
+        print(kwargs['platform'])
+        simulator_properties['platform'] = kwargs['platform']
+
     environment = initialize_environment(global_properties, simulator_properties)
     print('Simulator Environment Initialized')
 
     if kwargs['start']:
         print('Staring the environment')
         environment.start()
-
-
+    
 if __name__ == '__main__':
     cli()
