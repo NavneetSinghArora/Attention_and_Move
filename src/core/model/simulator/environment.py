@@ -106,12 +106,14 @@ class Environment:
             # update viewer
             viewer.update(initial_agent_1_event, count, True, self.rootDirectory)
 
-            # predicting image content using clip, installation procedure explained in clip.py
+            # predicting image content using clip
+            # installation procedure explained in clip.py
+            # TODO: add requirements
+            #
+            # rgb_frames = [event.frame for event in initial_agent_1_event.events]
             # for idx,img in enumerate(rgb_frames):
             #     predict(img, idx, target_object)
 
-            # rgb_frames = [event.frame for event in initial_agent_1_event.events]
-            # visualize_frames(rgb_frames, (8, 8), count, self.global_properties['root_directory'])     # temporarily disabled for testing of birds eye view!
             frame_objects = [event.metadata['objects'] for event in initial_agent_1_event.events]
             frame_count = 0
             for frame in frame_objects:
