@@ -5,7 +5,7 @@
 # Importing python libraries for required processing
 from ai2thor.controller import Controller
 from ai2thor.platform import CloudRendering, Linux64, OSXIntel64
-from src.core.services.birds_eye_view import BirdsEyeView
+from src.core.services.viewer import Viewer
 from src.core.services.common_services import visualize_frames
 import random
 import sys
@@ -26,12 +26,19 @@ class Environment:
 
         self.global_properties = global_properties
         self.simulator_properties = simulator_properties
+
+        # get global properties
+        self.rootDirectory = self.global_properties['root_directory']
+
+        # get simulator properties
+        self.agentCount = int(self.simulator_properties['number_of_agents'])
+
         self._started = False
 
         if not self.__instance_created:
             self.__controller = Controller(platform=getattr(sys.modules[__name__], self.simulator_properties['platform']),
 
-                                           agentCount=int(self.simulator_properties['number_of_agents']),
+                                           agentCount=self.agentCount,
                                            agentMode=self.simulator_properties['agent_mode'],
                                            visibilityDistance=float(self.simulator_properties['visibility_distance']),
                                            scene=self.simulator_properties['floor_scene'],
@@ -41,8 +48,7 @@ class Environment:
                                            rotateStepDegrees=30,
 
                                            renderDepthImage=bool(self.simulator_properties['render_depth_image']),
-                                           renderInstanceSegmentation=bool(
-                                               self.simulator_properties['render_image_segmentation']),
+                                           renderInstanceSegmentation=bool(self.simulator_properties['render_image_segmentation']),
 
                                            width=300,
                                            height=300,
@@ -85,7 +91,7 @@ class Environment:
         # adding official supported top-down camera (requires AI2THOR 3.3.4+) to be able to interactively plot a birds eye view
         event = self.__controller.step(action="GetMapViewCameraProperties")
         self.__controller.step(action="AddThirdPartyCamera", agentId=0, **event.metadata["actionReturn"])
-        birds_eye_view = BirdsEyeView()
+        viewer = Viewer(self.agentCount)
 
         initial_agent_0_event = self.__controller.step('Done', agentId=0)
         initial_agent_1_event = self.__controller.step('Done', agentId=1)
@@ -95,7 +101,10 @@ class Environment:
         agent_1_can_see = False
         while not agent_0_can_see or not agent_1_can_see:
             print(f"Making Move: {moves}")
-            birds_eye_view.update(initial_agent_0_event.events[0])                                      # TODO: birds eye view should be updated after EACH navigation event
+
+            # update viewer
+            viewer.update(initial_agent_1_event, count, True, self.rootDirectory)
+
             # rgb_frames = [event.frame for event in initial_agent_1_event.events]
             # visualize_frames(rgb_frames, (8, 8), count, self.global_properties['root_directory'])     # temporarily disabled for testing of birds eye view!
             frame_objects = [event.metadata['objects'] for event in initial_agent_1_event.events]
