@@ -5,6 +5,7 @@
 # Importing python libraries for required processing
 from ai2thor.controller import Controller
 from ai2thor.platform import CloudRendering, Linux64, OSXIntel64
+from src.core.services.clip import predict
 from src.core.services.viewer import Viewer
 from src.core.services.common_services import visualize_frames
 import random
@@ -104,6 +105,10 @@ class Environment:
 
             # update viewer
             viewer.update(initial_agent_1_event, count, True, self.rootDirectory)
+
+            # predicting image content using clip, installation procedure explained in clip.py
+            # for idx,img in enumerate(rgb_frames):
+            #     predict(img, idx, target_object)
 
             # rgb_frames = [event.frame for event in initial_agent_1_event.events]
             # visualize_frames(rgb_frames, (8, 8), count, self.global_properties['root_directory'])     # temporarily disabled for testing of birds eye view!
