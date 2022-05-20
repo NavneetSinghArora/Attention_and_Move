@@ -91,7 +91,7 @@ def start_environment(**kwargs):
     print('Simulator Properties Initialized')
 
     if kwargs['platform']:
-        print(kwargs['platform'])
+        print("Platform = " + kwargs['platform'])
         simulator_properties['platform'] = kwargs['platform']
 
     environment = initialize_environment(global_properties, simulator_properties)

@@ -1,19 +1,16 @@
-
 import clip
 import os
 import torch
-
 from PIL import Image
 from torchvision.datasets import CIFAR100
 
 
-# follow installation instructions on https://github.com/openai/CLIP
-def predict(img, idx, target):
+def predict(img, idx, target_object):
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model, preprocess = clip.load("ViT-B/32", device=device)
+    model, preprocess = clip.load("ViT-L/14@336px", device=device)
 
     # Download the dataset
-    cifar100 = CIFAR100(root=os.path.expanduser("~/.cache"), download=False, train=False)
+    cifar100 = CIFAR100(root=os.path.expanduser("~/.cache"), download=True, train=False)
 
     image = preprocess(Image.fromarray(img)).unsqueeze(0).to(device)
     text = torch.cat([clip.tokenize(f"a {c}") for c in cifar100.classes]).to(device)
@@ -31,4 +28,7 @@ def predict(img, idx, target):
     # Print the result
     print("Agent " + str(idx) + ":")
     for value, index in zip(values, indices):
-        print(f"{cifar100.classes[index]:>16s}: {100 * value.item():.2f}%")
+        found = ''
+        if cifar100.classes[index] == target_object.lower():
+            found = ' - found ' + target_object + '!'
+        print(f"{cifar100.classes[index]:>16s}: {100 * value.item():.2f}%{found}")

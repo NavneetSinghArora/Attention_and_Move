@@ -84,7 +84,7 @@ class Environment:
         self.randomize_agents()
         print('Agent Positions Randomized')
 
-        print('Staring with the Agent Movements')
+        print('Starting with the Agent Movements')
 
         target_object = self.simulator_properties['target_object']
         print(f"Target Object to be Located: {target_object}")
@@ -107,12 +107,9 @@ class Environment:
             viewer.update(initial_agent_1_event, count, True, self.rootDirectory)
 
             # predicting image content using clip
-            # installation procedure explained in clip.py
-            # TODO: add requirements
-            #
-            # rgb_frames = [event.frame for event in initial_agent_1_event.events]
-            # for idx,img in enumerate(rgb_frames):
-            #     predict(img, idx, target_object)
+            rgb_frames = [event.frame for event in initial_agent_1_event.events]
+            for idx,img in enumerate(rgb_frames):
+                predict(img, idx, target_object)
 
             frame_objects = [event.metadata['objects'] for event in initial_agent_1_event.events]
             frame_count = 0

@@ -1,3 +1,4 @@
+import platform
 from setuptools import setup, find_packages
 
 NAME = 'Attention_and_Move'
@@ -13,9 +14,56 @@ with open('README.md', 'r') as readme_file:
 with open('HISTORY.md', 'r') as history_file:
     history = history_file.read()
 
+system = "linux"
+python_version = ''.join(platform.python_version_tuple()[0:2])
+
+if platform.system() == "Windows":
+    system = "win"
+elif platform.system() == "Darwin":
+    system = "macosx"
+
 requirements = [
-    "Click",
-    "intake"
+    "ai2thor==4.2.0",
+    "aws-requests-auth==0.4.3",
+    "botocore==1.26.4",
+    "certifi==2020.6.20",
+    "charset-normalizer==2.0.12",
+    "click==8.1.3",
+    "clip @ git+https://github.com/openai/CLIP.git@b46f5ac7587d2e1862f8b7b1573179d80dcdd620",
+    "cycler==0.11.0",
+    "Flask==2.1.2",
+    "fonttools==4.33.3",
+    "ftfy==6.1.1",
+    "idna==3.3",
+    "itsdangerous==2.1.2",
+    "Jinja2==3.1.2",
+    "jmespath==1.0.0",
+    "jproperties==2.1.1",
+    "kiwisolver==1.4.2",
+    "MarkupSafe==2.1.1",
+    "matplotlib==3.5.2",
+    "msgpack==1.0.3",
+    "numpy==1.22.3",
+    "opencv-python==4.5.5.64",
+    "packaging==21.3",
+    "Pillow==9.1.1",
+    "progressbar2==4.0.0",
+    "pyparsing==3.0.9",
+    "python-dateutil==2.8.2",
+    "python-utils==3.2.3",
+    "python-xlib==0.31",
+    "PyYAML==6.0",
+    "regex==2022.4.24",
+    "requests==2.27.1",
+    "six==1.16.0",
+    f"torch @ https://download.pytorch.org/whl/cu113/torch-1.11.0%2Bcu113-cp{python_version}-cp{python_version}-{system}_x86_64.whl",
+    f"torchaudio @ https://download.pytorch.org/whl/cu113/torchaudio-0.11.0%2Bcu113-cp{python_version}-cp{python_version}-{system}_x86_64.whl",
+    f"torchvision @ https://download.pytorch.org/whl/cu113/torchvision-0.12.0%2Bcu113-cp{python_version}-cp{python_version}-{system}_x86_64.whl",
+    "tqdm==4.64.0",
+    "typing_extensions==4.2.0",
+    "urllib3==1.26.9",
+    "wcwidth==0.2.5",
+    "Werkzeug==2.1.2"
 ]
 
 setup(

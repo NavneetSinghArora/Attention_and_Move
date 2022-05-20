@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-
 from os import makedirs
 from os.path import join
 from PIL import Image
