@@ -31,7 +31,7 @@ In the model folder, we can keep different modules to modularize, obj detection,
 Used everywhere in the industry, it has certain functionalities that serve the main module. Things that cannot be added to the module but still want it so it is added to services. 
 
 ## Utils-
-Loading of property, etc
+Loading of property and other utilities, etc
 
 
 
