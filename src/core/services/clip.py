@@ -1,19 +1,19 @@
 import clip
-import os
 import torch
+from os.path import join
 from PIL import Image
 from torchvision.datasets import CIFAR100
 
 
-def predict(img, idx, target_object):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    model, preprocess = clip.load("ViT-L/14@336px", device=device)
+def predict(img, idx, target_object, rootDirectory):
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    model, preprocess = clip.load('ViT-L/14@336px', device=device, download_root=join(rootDirectory, 'data/external/clip/models/'))
 
     # Download the dataset
-    cifar100 = CIFAR100(root=os.path.expanduser("~/.cache"), download=True, train=False)
+    cifar100 = CIFAR100(root=join(rootDirectory, 'data/external/torchvision/datasets/'), download=True, train=False)
 
     image = preprocess(Image.fromarray(img)).unsqueeze(0).to(device)
-    text = torch.cat([clip.tokenize(f"a {c}") for c in cifar100.classes]).to(device)
+    text = torch.cat([clip.tokenize(f'a {c}') for c in cifar100.classes]).to(device)
 
     with torch.no_grad():
         image_features = model.encode_image(image)
@@ -26,7 +26,7 @@ def predict(img, idx, target_object):
     values, indices = similarity[0].topk(10)
 
     # Print the result
-    print("Agent " + str(idx) + ":")
+    print('Agent ' + str(idx) + ':')
     for value, index in zip(values, indices):
         found = ''
         if cifar100.classes[index] == target_object.lower():

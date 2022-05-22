@@ -21,8 +21,14 @@ class PrepareDataset:
                                      renderDepthImage=False, renderInstanceSegmentation=False,
                                      width=300, height=300, fieldOfView=90)
 
+        # Initializing the floor scenes
+        self.kitchens = [f"FloorPlan{i}" for i in range(1, 31)]
+        self.living_rooms = [f"FloorPlan{200 + i}" for i in range(1, 31)]
+        self.bedrooms = [f"FloorPlan{300 + i}" for i in range(1, 31)]
+        self.bathrooms = [f"FloorPlan{400 + i}" for i in range(1, 31)]
+
         # Creating the list of all the scenes available to retrieve the data
-        self.scenes = self.controller.ithor_scenes()
+        self.scenes = self.kitchens + self.living_rooms + self.bedrooms + self.bathrooms
 
         # Collection of Moves available
         self.move_actions = ["Done", "MoveAhead", "MoveBack", "MoveLeft", "MoveRight"]

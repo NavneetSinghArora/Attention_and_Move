@@ -109,7 +109,7 @@ class Environment:
             # predicting image content using clip
             rgb_frames = [event.frame for event in initial_agent_1_event.events]
             for idx,img in enumerate(rgb_frames):
-                predict(img, idx, target_object)
+                predict(img, idx, target_object, self.rootDirectory)
 
             frame_objects = [event.metadata['objects'] for event in initial_agent_1_event.events]
             frame_count = 0

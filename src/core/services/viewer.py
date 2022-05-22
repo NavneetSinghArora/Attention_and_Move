@@ -30,10 +30,10 @@ class Viewer(object):
     def update(self, multiAgentEvent, moveNumber: int, saveFigure: bool, rootDirectory):
         
         for i,e in enumerate(multiAgentEvent.events):
-            self._axs[0, i].set_title(f'AgentId: {i}', fontname='Andale Mono')
+            self._axs[0, i].set_title(f'AgentId: {i}')
             self._img[i].set_data(e.frame)
 
-        self._axs[1, 0].set_title(f'birds eye view', fontname='Andale Mono')
+        self._axs[1, 0].set_title(f'birds eye view')
         self._img[self._agent_count].set_data(Image.fromarray(multiAgentEvent.events[0].third_party_camera_frames[0]))
         
         self._fig.canvas.draw()
@@ -41,7 +41,7 @@ class Viewer(object):
 
         if saveFigure:
             try:
-                makedirs("output/agent_movements/", exist_ok=True)
+                makedirs(join(rootDirectory, 'output/agent_movements/'), exist_ok=True)
                 plt.savefig(join(rootDirectory, 'output/agent_movements/' + 'Move_' + str(moveNumber) + '_.png'))
             except FileExistsError:
                 pass
