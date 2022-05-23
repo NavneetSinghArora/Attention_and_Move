@@ -6,7 +6,7 @@
 #   run this project on Hummel.
 #   
 #   1. make sure that python>=3.8 and singularity==3.9.1 are available
-#   2. make sure ~/.ssh/config is configure with hummel1
+#   2. make sure ~/.ssh/config is configured with hummel1
 #   3. make sure you are in the UHH or Informatik VPN
 #   4. enter your password when asked
 #   5. be patient, initialization may take some time
