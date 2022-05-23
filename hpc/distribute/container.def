@@ -1,0 +1,14 @@
+Bootstrap: docker
+From: nvidia/vulkan:1.2.170-470
+
+%post -c /bin/bash
+    apt-get update -q
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3 python3-pip python3-venv git
+    git clone https://github.com/NavneetSinghArora/Attention_and_Move.git /Attention_and_Move
+    python3 -m venv /venv
+    source /venv/bin/activate
+    pip install -U pip
+    pip install /Attention_and_Move
+
+%help
+    This container hosts the Attention_and_Move project for execution on HPC systems.
