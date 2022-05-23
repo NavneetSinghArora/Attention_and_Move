@@ -3,14 +3,14 @@
 # ==========================================================================
 #   
 #   This script prefetches, creates and distributes all files needed to 
-#   run this project on hummel.
+#   run this project on Hummel.
 #   
 #   1. make sure that python>=3.8 and singularity==3.9.1 are available
-#   2. run: sh hummel.sh username       # use UHH username, e.g. ba*####
-#   3. enter your password when asked
-#   4. be patient, initialization may take some time
+#   2. make sure ~/.ssh/config is configure with hummel1
+#   3. make sure you are in the UHH or Informatik VPN
+#   4. enter your password when asked
+#   5. be patient, initialization may take some time
 #   
-#   TODO: create cli.command to distribute project to hummel
 #   TODO: make sure only thor-CloudRendering environment is transfered
 #   
 # ==========================================================================
@@ -21,7 +21,7 @@ python prefetch_data.py
 # create singularity container
 sudo singularity build container.sif container.def
 
-# copy data from local to hummel via sftp
+# copy data from local to Hummel via sftp
 sftp hummel1 <<EOF
     mkdir /home/$1/jobs
     mkdir /work/$1/.ai2thor
@@ -35,4 +35,4 @@ sftp hummel1 <<EOF
 EOF
 
 # give advice on how to finalize initialization
-echo 'Please finish initialization by running sh $HOME/jobs/init.sh on interactive hummel shell.'
+echo "Please finish initialization by running 'sh \$HOME/jobs/init.sh' on interactive Hummel shell."

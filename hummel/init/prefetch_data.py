@@ -8,7 +8,7 @@ from torchvision.datasets import CIFAR100
 
 # =======================================================================
 # NOTE: This script prefetches data that is required to run this
-#       project on hummel. It will be executed by hummel.sh!
+#       project on Hummel. It will be executed by hummel.sh!
 # =======================================================================
 
 dirname = os.path.dirname(__file__)                                                                                 # get path of data.py
