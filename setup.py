@@ -14,13 +14,12 @@ with open('README.md', 'r') as readme_file:
 with open('HISTORY.md', 'r') as history_file:
     history = history_file.read()
 
-system = "linux"
-python_version = ''.join(platform.python_version_tuple()[0:2])
-
-if platform.system() == "Windows":
-    system = "win"
-elif platform.system() == "Darwin":
+if platform.system() == "Darwin":
     system = "macosx"
+else:
+    system = "linux"
+
+python_version = ''.join(platform.python_version_tuple()[0:2])
 
 requirements = [
     "ai2thor==4.2.0",

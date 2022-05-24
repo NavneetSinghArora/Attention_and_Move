@@ -3,13 +3,12 @@ This script offers the CLI interface for the entire project.
 """
 
 # Importing python libraries for required processing
+from hummel.commands import Hummel
 from src.core.utils.global_variables import GlobalVariables
 from src.core.utils.simulator.simulator_variables import SimulatorVariables
 from src.core.model.simulator.environment import Environment
 from pathlib import Path
 import click
-# import pandas as pd
-# import numpy as np
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -71,18 +70,23 @@ def _init(**kwargs):
 
 # Command line interface (CLI) main
 @click.group(chain=True, help='Command line tool for pyetl.', invoke_without_command=True, context_settings=CONTEXT_SETTINGS)
-def cli(**kwargs):
+def cli1(**kwargs):
     global_variables = _init(**kwargs)
     global_properties = global_variables.global_properties
 
     """Entry point for the command line interface."""
     click.echo("\nThis is the command line interface of Attention_and_Move. Type 'attention_and_move --help' for details.\n")
 
+@click.group(chain=True, help='Command line tool for pyetl.', invoke_without_command=True, context_settings=CONTEXT_SETTINGS)
+def cli2(**kwargs):
+    _ = _init(**kwargs)
 
-@cli.command('training', context_settings=CONTEXT_SETTINGS)
+
+@cli1.command('training', context_settings=CONTEXT_SETTINGS)
 @click.option('-p', '--platform', is_flag=False, default='CloudRendering', show_default=True, help='Choose between CloudRendering, Linux64, OSXIntel64')
-@click.option('-s', '--start', is_flag=True, help='This is a flag to start the training and agent movements')
-def start_environment(**kwargs):
+@click.option('-s', '--start', is_flag=True, help='Start training')
+def start_local_training(**kwargs):
+    """Start training on local machine"""
     global_variables = GlobalVariables(**kwargs)
     global_properties = global_variables.global_properties
     print('Project Properties Initialized')
@@ -98,8 +102,26 @@ def start_environment(**kwargs):
     print('Simulator Environment Initialized')
 
     if kwargs['start']:
-        print('Staring the environment')
+        print('Staring environment')
         environment.start()
-    
+
+
+@cli2.command('hummel', context_settings=CONTEXT_SETTINGS)
+@click.option('-u', '--user', is_flag=False, required=True, help='UHH username, i.e. ba*####')
+@click.option('-i', '--init', is_flag=True, help='Initialize AAM on Hummel')
+@click.option('-t', '--train', is_flag=True, help='Start training on Hummel')
+def hummel(**kwargs):
+    """Run AAM on Hummel"""
+
+    if kwargs['init']:
+        print("Starting to initialize AAM on Hummel with user={}".format(kwargs['user']))
+        Hummel.init(username=kwargs['user'])
+
+    if kwargs['train']:
+        print("Start training on Hummel with user={}".format(kwargs['user']))
+        Hummel.train(username=kwargs['user'])
+
+cli = click.CommandCollection(sources=[cli1, cli2])
+
 if __name__ == '__main__':
     cli()
