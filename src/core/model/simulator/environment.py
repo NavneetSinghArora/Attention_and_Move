@@ -103,8 +103,8 @@ class Environment:
 
         # predicting image content using clip
         rgb_frames = [event.frame for event in initial_agent_1_event.events]
-        clip_output['agent0'] = predict(rgb_frames[0], target_object, target_object_threshold, self.rootDirectory)
-        clip_output['agent1'] = predict(rgb_frames[1], target_object, target_object_threshold, self.rootDirectory)
+        clip_output['agent0'] = predict_clip(rgb_frames[0], target_object, target_object_threshold, self.rootDirectory)
+        clip_output['agent1'] = predict_clip(rgb_frames[1], target_object, target_object_threshold, self.rootDirectory)
         print('CLIP shape: ', len(clip_output))
         print('CLIP output Agent 0: ', clip_output['agent0'])
         print('CLIP output Agent 1: ', clip_output['agent1'])
