@@ -5,7 +5,7 @@ from PIL import Image
 from torchvision.datasets import CIFAR100
 
 
-def predict(frame, target_object, target_object_threshold, rootDirectory):
+def predict_clip(frame, target_object, target_object_threshold, rootDirectory):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model, preprocess = clip.load('ViT-L/14@336px', device=device, download_root=join(rootDirectory, 'data/external/clip/models/'))
 
@@ -37,4 +37,4 @@ def predict(frame, target_object, target_object_threshold, rootDirectory):
             target_found = True
         # print(f"{cifar100.classes[index]:>16s}: {100 * value.item():.2f}%{found}")
 
-    return (image_features, target_found, similarity)
+    return (image_features, text_features, target_found, similarity)
