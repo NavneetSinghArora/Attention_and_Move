@@ -5,7 +5,7 @@
 # Importing python libraries for required processing
 from ai2thor.controller import Controller
 from ai2thor.platform import CloudRendering, Linux64, OSXIntel64
-from src.core.services.clip import predict
+from src.core.services.clip import predict_clip
 from src.core.services.viewer import Viewer
 from src.core.services.common_services import visualize_frames
 import random
