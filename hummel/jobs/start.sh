@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=AAM                                                          # Attention and Move
-#SBATCH --nodes=2
+#SBATCH --nodes=1
 #SBATCH --partition=gpu
 #SBATCH --tasks-per-node=1
 #SBATCH --time=00:03:00
