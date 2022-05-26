@@ -71,23 +71,24 @@ def _init(**kwargs):
 # Command line interface (CLI) main
 @click.group(chain=True, help='Command line tool for pyetl.', invoke_without_command=True, context_settings=CONTEXT_SETTINGS)
 def cli1(**kwargs):
-    global_variables = _init(**kwargs)
-    global_properties = global_variables.global_properties
+    pass
 
-    """Entry point for the command line interface."""
-    click.echo("\nThis is the command line interface of Attention_and_Move. Type 'attention_and_move --help' for details.\n")
 
 @click.group(chain=True, help='Command line tool for pyetl.', invoke_without_command=True, context_settings=CONTEXT_SETTINGS)
 def cli2(**kwargs):
-    _ = _init(**kwargs)
+    pass
 
 
 @cli1.command('training', context_settings=CONTEXT_SETTINGS)
 @click.option('-p', '--platform', is_flag=False, default='CloudRendering', show_default=True, help='Choose between CloudRendering, Linux64, OSXIntel64')
 @click.option('-s', '--start', is_flag=True, help='Start training')
-def start_local_training(**kwargs):
+def training(**kwargs):
+
+    """Entry point for the command line interface."""
+    click.echo("\nThis is the command line interface of Attention_and_Move. Type 'attention_and_move --help' for details.\n")
+
     """Start training on local machine"""
-    global_variables = GlobalVariables(**kwargs)
+    global_variables = _init(**kwargs)
     global_properties = global_variables.global_properties
     print('Project Properties Initialized')
 
