@@ -5,15 +5,16 @@ from PIL import Image
 from torchvision.datasets import CIFAR100
 
 
-def predict_clip(frame, target_object, target_object_threshold, rootDirectory):
+def predict_clip(frame, target_object, target_object_threshold, rootDirectory, simulator_properties):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model, preprocess = clip.load('ViT-L/14@336px', device=device, download_root=join(rootDirectory, 'data/external/clip/models/'))
 
-    # Download the dataset
-    cifar100 = CIFAR100(root=join(rootDirectory, 'data/external/torchvision/datasets/'), download=True, train=False)
+    obj_classes = simulator_properties['object_classes'].split(',')
+
+    # cifar100 = CIFAR100(root=join(rootDirectory, 'data/external/torchvision/datasets/'), download=True, train=False)
 
     image = preprocess(Image.fromarray(frame)).unsqueeze(0).to(device)
-    text = torch.cat([clip.tokenize(f'a {c}') for c in cifar100.classes]).to(device)
+    text = torch.cat([clip.tokenize(f'a {c}') for c in obj_classes]).to(device)
 
     with torch.no_grad():
         image_features = model.encode_image(image)
@@ -32,9 +33,9 @@ def predict_clip(frame, target_object, target_object_threshold, rootDirectory):
     target_found = False
     for value, index in zip(values, indices):
         # found = ''
-        if cifar100.classes[index] == target_object.lower() and 100 * value.item() >= int(target_object_threshold):
+        if obj_classes[index] == target_object.lower() and 100 * value.item() >= int(target_object_threshold):
             # found = ' - found ' + target_object + '!'
             target_found = True
-        # print(f"{cifar100.classes[index]:>16s}: {100 * value.item():.2f}%{found}")
+        # print(f"{obj_classes[index]:>16s}: {100 * value.item():.2f}%{found}")
 
     return (image_features, text_features, target_found, similarity)
