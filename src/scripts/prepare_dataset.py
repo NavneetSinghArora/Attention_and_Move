@@ -57,7 +57,7 @@ class PrepareDataset:
         rgb_frames = [event.frame for event in self.controller.last_event.events]
         np.append(self.frames, rgb_frames)
 
-    # def create_files(self, rgb_frame, image_count, frame_object, collectable_scene, floor):
+    def create_files(self, rgb_frame, image_count, frame_object, collectable_scene, floor):
         plt.figure(figsize=(8, 8), dpi=100)
         plt.imshow(rgb_frame)
         plt.axis('off')
@@ -82,7 +82,7 @@ class PrepareDataset:
 
         plt.close()
 
-    # def collect_dataset(self):
+    def collect_dataset(self):
         collectable_scene = None
         for scenes in self.dataset_scenes:
             if scenes == 'LivingRoom':
