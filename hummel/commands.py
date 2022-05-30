@@ -10,7 +10,4 @@ class Hummel:
 
     @staticmethod
     def train():
-        pass
-        
-        # add path to the python script that shall be executed locally on hummel, please keep '{}/../' as part of the path!
-        # os.system('python3 {}/../your_path.py'.format(os.path.dirname(os.path.realpath(__file__))))
+        os.system('python {}/../cordialsync/main.py'.format(os.path.dirname(os.path.realpath(__file__))))
