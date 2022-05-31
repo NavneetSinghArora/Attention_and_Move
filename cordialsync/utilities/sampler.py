@@ -17,7 +17,6 @@ def create_environment(
     **environment_args,
 ) -> AI2ThorEnvironmentWithGraph:
     env = AI2ThorEnvironmentWithGraph(
-        docker_enabled=False,
         num_agents=num_agents,
         restrict_to_initially_reachable_points=True,
         visible_agents=visible_agents,
