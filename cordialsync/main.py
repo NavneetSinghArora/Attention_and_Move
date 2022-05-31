@@ -51,7 +51,6 @@ if __name__ == "__main__":
         # Caching current state of the project
         log_file_path = save_project_state_in_log(
             sys.argv,
-            "Attention and Move",
             local_start_time_str,
             None
             if experiment.saved_model_path is None
@@ -285,7 +284,7 @@ if __name__ == "__main__":
                     save_path = os.path.join(
                         args.save_model_dir,
                         "{}_{}_{}.dat".format(
-                            task, train_total_ep.value, local_start_time_str
+                            train_total_ep.value, local_start_time_str
                         ),
                     )
                     torch.save(

@@ -190,7 +190,6 @@ def fibonacci_sphere(samples=1):
 
 def save_project_state_in_log(
     call,
-    task,
     local_start_time_str,
     dependent_data_paths: Optional[Tuple[str, ...]] = None,
     log_dir: str = "logs/",
