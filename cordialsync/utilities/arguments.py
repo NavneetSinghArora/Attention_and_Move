@@ -7,7 +7,6 @@ def str2bool(v):
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="A3C")
-    parser.add_argument("--task", type=str, help="The experiment config to run (e.g. furnmove_grid_bigcentral_cl_rot, furnmove_grid_mixture_3agents, etc.). `--experiment_dir` should be used to specify the directory where this config resides.")
     parser.add_argument("--experiment_dir", type=str, default="rl_multi_agent/experiments", help="The directory to look in to find the config file for this run. (default `rl_multi_agent/experiments`)")
     parser.add_argument("--tag", type=str, default="", help="A tag for the run (e.g. lstm-not-gru, trying-new-thing). If not-empty, this tag is used as a subdirectory along the tensorboard path. (default: '')")
     parser.add_argument("--lr", type=float, default=0.0001, metavar="LR", help="Learning rate (default: 0.0001).")
@@ -21,7 +20,6 @@ def parse_arguments():
     parser.add_argument("--log_dir", default="logs/", metavar="LG", help="Folder in which to save (tensorboard) logs. (default: logs)")
     parser.add_argument("--gpu_ids", type=int, default=-1, nargs="+", help="GPUs to use [-1 CPU only] (default: -1)")
     parser.add_argument("--amsgrad", type=str2bool, default=True, metavar="AM", help="Adam optimizer amsgrad parameter. (default: True)")
-    parser.add_argument("--docker_enabled", action="store_true", help="Whether or not to use docker." " This flag should not be used unless you know what you're doing.")
     parser.add_argument("--val_timeout", type=float, default=10, help="The length of time to wait in between validation episodes. (default: 10)")
     parser.add_argument("--enable_val_agent", type=str2bool, default=True, help="Whether or not to use an agent to validate results while training. (default: True)")
     parser.add_argument("--enable_logging", type=str2bool, default=True, help="Whether or not to record logging information (e.g. tensorboard logs). (default: True)")

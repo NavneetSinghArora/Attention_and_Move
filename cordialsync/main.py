@@ -1,3 +1,5 @@
+from __future__ import print_function, division
+
 import collections
 import copy
 import ctypes
@@ -17,7 +19,7 @@ from tensorboardX import SummaryWriter
 from torch import nn
 from typing import Optional
 
-from cordialsync.experiments.furnliftvisionmixtureclconfig import get_experiment
+from cordialsync.experiments.config import get_experiment
 from cordialsync.learning.optimizer import SharedAdam, SharedRMSprop
 from cordialsync.learning.test import test
 from cordialsync.learning.train import train
@@ -38,8 +40,9 @@ if __name__ == "__main__":
 
     args = parse_arguments()
 
-    task = args.task
     experiment = get_experiment()
+    experiment.init_train_agent.env_args = args
+    experiment.init_test_agent.env_args = args
 
     start_time = time.time()
     local_start_time_str = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime(start_time))
@@ -48,7 +51,7 @@ if __name__ == "__main__":
         # Caching current state of the project
         log_file_path = save_project_state_in_log(
             sys.argv,
-            task,
+            "Attention and Move",
             local_start_time_str,
             None
             if experiment.saved_model_path is None
@@ -158,7 +161,7 @@ if __name__ == "__main__":
         sys.exit()
 
     for rank in range(0, args.workers):
-        train_experiment = copy.deepcopy(experiment)
+        train_experiment = copy.deepcopy(experiment)                            # each worker get's his own experiment
         train_experiment.init_train_agent.seed = random.randint(0, 10 ** 10)
         p = mp.Process(
             target=train,

@@ -2,21 +2,23 @@ from torch import nn
 from typing import Optional
 
 from cordialsync.learning.multiagent import MultiAgent
-from cordialsync.experiments.furnliftbaseconfig import FurnLiftBaseConfig
-from cordialsync.learning.models import BigA3CLSTMNStepComCoordinatedActionsEgoVision
+from cordialsync.experiments.base import FurnLiftBaseConfig
+from cordialsync.learning.model import Model
 
 
+# originally furnlift_vision_mixture_cl_config.py
+# this config is using the Cordial Loss (cl) and SYNC Policies (abstracted from description on https://github.com/allenai/cordial-sync)
 class FurnLiftMinDistMixtureConfig(FurnLiftBaseConfig):
     
     min_dist_between_agents_to_pickup = 8       # Env/episode config
     visible_agents = True
     turn_off_communication = False              # Model config
     agent_class = MultiAgent                    # Agent config
-    coordinate_actions = True                   # Coordination -> Mixture
+    coordinate_actions = True                   # Mixture (SYNC-Policies)
 
     @classmethod
     def create_model(cls, **kwargs) -> nn.Module:
-        return BigA3CLSTMNStepComCoordinatedActionsEgoVision(
+        return Model(
             num_inputs_per_agent=3 + 1 * (cls.include_depth_frame),
             action_groups=cls.episode_class.class_available_action_groups(),
             num_agents=cls.num_agents,

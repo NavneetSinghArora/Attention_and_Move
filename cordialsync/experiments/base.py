@@ -5,9 +5,9 @@ import torch
 
 import cordialsync.utilities.constants as CONSTANTS
 from cordialsync.experiments.experiment import ExperimentConfig
-from cordialsync.learning.episodes.furnlift import FurnLiftNApartStateEpisode
+from cordialsync.learning.episodes import FurnLiftNApartStateEpisode
 from cordialsync.learning.multiagent import MultiAgent
-from cordialsync.learning.sampler.furnliftepisode import FurnLiftEpisodeSamplers
+from cordialsync.learning.samplers import FurnLiftEpisodeSamplers
 
 
 class FurnLiftBaseConfig(ExperimentConfig, ABC):
@@ -71,9 +71,7 @@ class FurnLiftBaseConfig(ExperimentConfig, ABC):
     def get_init_valid_params(cls):
         init_valid_params = {**cls.get_init_train_params(), "scenes": cls.valid_scenes}
         if cls.save_talk_reply_probs_path is not None:
-            init_valid_params[
-                "save_talk_reply_probs_path"
-            ] = cls.save_talk_reply_probs_path
+            init_valid_params["save_talk_reply_probs_path"] = cls.save_talk_reply_probs_path
         return init_valid_params
 
     def __init__(self):

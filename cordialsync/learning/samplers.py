@@ -12,9 +12,9 @@ from typing import List, Optional, Callable, Tuple
 
 import cordialsync.utilities.constants as CONSTANTS
 from cordialsync.ai2thor.environment import AI2ThorEnvironmentWithGraph
-from cordialsync.learning.episodes.furnlift import JointNavigationEpisode
+from cordialsync.learning.episodes import JointNavigationEpisode
 from cordialsync.learning.multiagent import MultiAgent
-from cordialsync.learning.sampler.helper import create_environment, save_talk_reply_data_frame
+from cordialsync.utilities.sampler import create_environment, save_talk_reply_data_frame
 from cordialsync.utilities.ai2thor import manhattan_dists_between_positions
 from cordialsync.utilities.multiagent import TrainingCompleteException
 
@@ -261,15 +261,7 @@ class FurnLiftEpisodeSamplers(object):
             failure_reasons = []
 
             # position agents and objects in scene
-            for _ in range(50):
-                env.step(
-                    {
-                        "action": "DisableAllObjectsOfType",
-                        "objectId": self.object_type,
-                        "agentId": 0,
-                    }
-                )
-
+            for _ in range(10):
                 for agent_id in range(self.num_agents):
                     env.randomize_agent_location(
                         agent_id=agent_id,
@@ -280,6 +272,20 @@ class FurnLiftEpisodeSamplers(object):
                         only_initially_reachable=True,
                     )
 
+                # randomly place objects in scene
+                env.step(
+                    {
+                        "action": "InitialRandomSpawn",
+                        "randomSeed": random.randint(0, int(1e9)),  # samples a new seed
+                        "forceVisible": False,
+                        "numPlacementAttempts": 50,
+                        "placeStationary": True,
+                        "numDuplicatesOfType": [],
+                        "excludedReceptacles": [],
+                        "excludedObjectIds": []
+                    }
+                )
+                
                 env.refresh_initially_reachable()
 
                 objects_of_type = env.all_objects_with_properties(

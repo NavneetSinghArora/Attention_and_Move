@@ -19,7 +19,6 @@ PROJECT_TOP_DIR = os.path.dirname(Path(__file__))   # TODO: change path to proje
 
 ABS_PATH_TO_ANALYSIS_RESULTS_DIR = os.path.join(PROJECT_TOP_DIR, "analysis_output")
 ABS_PATH_TO_DATA_DIR = os.path.join(PROJECT_TOP_DIR, "data")
-ABS_PATH_TO_FINAL_FURNMOVE_CKPTS = os.path.join(PROJECT_TOP_DIR, "trained_models", "final_furnmove_ckpts")
 ABS_PATH_TO_FINAL_FURNLIFT_CKPTS = os.path.join(PROJECT_TOP_DIR, "trained_models", "final_furnlift_ckpts")
 
 AGENT_SELF_0 = 6

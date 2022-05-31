@@ -22,7 +22,6 @@ from cordialsync.utilities.misc import round_to_factor
 class AI2ThorEnvironment(object):
     def __init__(
         self,
-        docker_enabled: bool = False,
         time_scale: float = 1.0,
         visibility_distance: float = CONSTANTS.VISIBILITY_DISTANCE,
         fov: float = CONSTANTS.FOV,
@@ -36,7 +35,6 @@ class AI2ThorEnvironment(object):
     ) -> None:
         self.num_agents = num_agents
         self.controller = Controller(headless=headless)
-        self.controller.docker_enabled = docker_enabled
         self._initially_reachable_points: Optional[List[Dict]] = None
         self._initially_reachable_points_set: Optional[Set[Dict]] = None
         self._started = False
@@ -607,12 +605,8 @@ class AI2ThorEnvironment(object):
                         }
                     )
                     self.last_event.events[agent_id].metadata["lastAction"] = action
-                    self.last_event.events[agent_id].metadata[
-                        "lastActionSuccess"
-                    ] = False
-                    self.last_event.events[agent_id].metadata[
-                        "errorMessage"
-                    ] = "Moved to location outside of initially reachable points."
+                    self.last_event.events[agent_id].metadata["lastActionSuccess"] = False
+                    self.last_event.events[agent_id].metadata["errorMessage"] = "Moved to location outside of initially reachable points."
                     self.last_event.metadata = self.last_event.events[agent_id].metadata
 
         elif "Move" in action and "Hand" not in action:  # type: ignore
@@ -633,9 +627,7 @@ class AI2ThorEnvironment(object):
                     )
                     self.last_event.metadata["lastAction"] = action
                     self.last_event.metadata["lastActionSuccess"] = False
-                    self.last_event.metadata[
-                        "errorMessage"
-                    ] = "Moved to location outside of initially reachable points."
+                    self.last_event.metadata["errorMessage"] = "Moved to location outside of initially reachable points."
         elif "RandomizeHideSeekObjects" in action:
             last_positions = [
                 self.get_agent_location(agent_id=i) for i in range(self.num_agents)
@@ -655,9 +647,7 @@ class AI2ThorEnvironment(object):
             self._initially_reachable_points = self.controller.last_event.metadata["actionReturn"]
             self._initially_reachable_points_set = None
             self.controller.last_event.metadata["lastAction"] = action
-            self.controller.last_event.metadata["lastActionSuccess"] = metadata[
-                "lastActionSuccess"
-            ]
+            self.controller.last_event.metadata["lastActionSuccess"] = metadata["lastActionSuccess"]
             self.controller.last_event.metadata["actionReturn"] = []
         else:
             return self.controller.step(action_dict)
@@ -908,7 +898,6 @@ class AI2ThorEnvironmentWithGraph(AI2ThorEnvironment):
 
     def __init__(
         self,
-        docker_enabled: bool = False,
         time_scale: float = 1.0,
         visibility_distance: float = CONSTANTS.VISIBILITY_DISTANCE,
         fov: float = CONSTANTS.FOV,
@@ -922,7 +911,6 @@ class AI2ThorEnvironmentWithGraph(AI2ThorEnvironment):
         **kwargs,
     ):
         super(AI2ThorEnvironmentWithGraph, self).__init__(
-            docker_enabled=docker_enabled,
             time_scale=time_scale,
             visibility_distance=visibility_distance,
             fov=fov,
