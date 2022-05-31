@@ -8,6 +8,7 @@ from ai2thor.platform import CloudRendering, Linux64, OSXIntel64
 from src.core.services.clip import predict
 from src.core.services.viewer import Viewer
 from src.core.services.common_services import visualize_frames
+from src.core.model.object_detection.clip_detection import ClipObjectDetection
 import random
 import sys
 
@@ -87,76 +88,7 @@ class Environment:
         print('Starting with the Agent Movements')
 
         target_object = self.simulator_properties['target_object']
-        print(f"Target Object to be Located: {target_object}")
-
-        # adding official supported top-down camera (requires AI2THOR 3.3.4+) to be able to interactively plot a birds eye view
-        event = self.__controller.step(action="GetMapViewCameraProperties")
-        self.__controller.step(action="AddThirdPartyCamera", agentId=0, **event.metadata["actionReturn"])
-        viewer = Viewer(self.agentCount)
-
-        initial_agent_0_event = self.__controller.step('Done', agentId=0)
-        initial_agent_1_event = self.__controller.step('Done', agentId=1)
-        count = 0
-        moves = 0
-        agent_0_can_see = False
-        agent_1_can_see = False
-        while not agent_0_can_see or not agent_1_can_see:
-            print(f"Making Move: {moves}")
-
-            # update viewer
-            viewer.update(initial_agent_1_event, count, True, self.rootDirectory)
-
-            # predicting image content using clip
-            rgb_frames = [event.frame for event in initial_agent_1_event.events]
-            for idx,img in enumerate(rgb_frames):
-                predict(img, idx, target_object, self.rootDirectory)
-
-            frame_objects = [event.metadata['objects'] for event in initial_agent_1_event.events]
-            frame_count = 0
-            for frame in frame_objects:
-                for item in frame:
-                    if frame_count == 0:
-                        if target_object in item['name'] and item['visible']:
-                            agent_0_can_see = True
-                    else:
-                        if target_object in item['name'] and item['visible']:
-                            agent_1_can_see = True
-                frame_count = frame_count + 1
-            count = count + 1
-
-            if not agent_0_can_see and not agent_1_can_see:
-                initial_agent_0_event = self.__controller.step('RotateRight', agentId=0)
-                initial_agent_1_event = self.__controller.step('RotateRight', agentId=1)
-            elif not agent_0_can_see and agent_1_can_see:
-                initial_agent_0_event = self.__controller.step('RotateRight', agentId=0)
-                initial_agent_1_event = self.__controller.step('Done', agentId=1)
-            elif agent_0_can_see and not agent_1_can_see:
-                initial_agent_0_event = self.__controller.step('Done', agentId=0)
-                initial_agent_1_event = self.__controller.step('RotateRight', agentId=1)
-            else:
-                initial_agent_0_event = self.__controller.step('Done', agentId=0)
-                initial_agent_1_event = self.__controller.step('Done', agentId=1)
-                break
-            moves = moves + 1
-            if moves == 11:
-                print('Maximum moves reached. One of the agents not in a position to view the target object')
-                break
-
-
-        # for i in range(0, 12):
-        #     print(f"Making Agent Movement: {i}")
-        #     event_0 = self.__controller.step('RotateLeft', agentId=0)
-        #     event_1 = self.__controller.step('RotateRight', agentId=1)
-        #
-        #     for j, multi_agent_event in enumerate([event_0, event_1]):
-        #         rgb_frames = [event.frame for event in multi_agent_event.events]
-        #         frame_objects = [event.metadata.objects for event in multi_agent_event.events]
-        #         visualize_frames(rgb_frames, (8, 8), i, self.global_properties['root_directory'])
-        #         target_found = locate_object_in_frame(rgb_frames, frame_objects, target_object)
-        #         if (target_found):
-        #             continue
-        #         else:
-        #             rotate_agent(j)
+        clip_object_detection = ClipObjectDetection(self.global_properties, self.simulator_properties).train()
 
         self._started = True
 
