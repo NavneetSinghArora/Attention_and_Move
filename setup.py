@@ -29,6 +29,7 @@ requirements = [
     "charset-normalizer==2.0.12",
     "click==8.1.3",
     "clip @ git+https://github.com/openai/CLIP.git@b46f5ac7587d2e1862f8b7b1573179d80dcdd620",
+    "colour==0.1.5",
     "cycler==0.11.0",
     "Flask==2.1.2",
     "fonttools==4.33.3",
