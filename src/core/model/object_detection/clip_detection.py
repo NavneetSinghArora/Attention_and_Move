@@ -21,8 +21,8 @@ class ClipObjectDetection:
     def __init__(self, global_properties, simulator_properties):
         self.global_properties = global_properties
         self.simulator_properties = simulator_properties
-        torch.cuda.set_device(0)
-        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        torch.cuda.set_device(1)
+        self.device = "cuda:1" if torch.cuda.is_available() else "cpu"
         self.model, self.preprocess = clip.load("ViT-B/32", device=self.device, jit=False)
         self.training_data_path = ''
         self.validation_data_path = ''
@@ -48,7 +48,7 @@ class ClipObjectDetection:
         training_annotations = os.listdir(
             '/export2/scratch/cv_proj_team1/Attention_and_Move/output/dataset/training/annotations/')
         training_dataset = SimulatorDataset(object_classes, training_images, training_annotations, self.preprocess, 'training')
-        training_dataloader = DataLoader(training_dataset, batch_size=16, shuffle=True)
+        training_dataloader = DataLoader(training_dataset, batch_size=1, shuffle=True)
 
         validation_images = os.listdir(
             '/export2/scratch/cv_proj_team1/Attention_and_Move/output/dataset/validation/images/')
@@ -75,10 +75,10 @@ class ClipObjectDetection:
             with tqdm(total=len(training_dataloader) - 1) as bar:
                 # loss_mean = RollingMean()
                 for images, targets, texts in training_dataloader:
-                    images_features = self.model.encode_image(images.to(self.device))
                     for i in range(len(targets)):
+                        images_features = self.model.encode_image(images.to(self.device))
                         target = targets[i].reshape(1, 1).to(self.device)
-                        texts_features = self.model.encode_text(texts[i].reshape(1,77).to(self.device))
+                        texts_features = self.model.encode_text(texts[0][i].reshape(1,77).to(self.device))
 
                         optimiser.zero_grad()
 
@@ -90,7 +90,6 @@ class ClipObjectDetection:
 
                         # Apply Cross Entropy Loss SemiHardLoss
                         loss = self.criterion(features, np.squeeze(target).reshape(1))
-
                         loss.backward()
                     optimiser.step()
                     scheduler.step()
@@ -98,7 +97,7 @@ class ClipObjectDetection:
                     # Update metric and progress bar
                     # loss_mean.update(loss.item())
                     bar.update()
-                    bar.set_description('{:.4f}'.format(loss.result()))
+                    # bar.set_description('{:.4f}'.format(loss.result()))
 
 
 #
