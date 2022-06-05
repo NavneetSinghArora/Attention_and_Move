@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import sys
 
-from ai2thor.platform import CloudRendering, Linux64, OSXIntel64
+from ai2thor.platform import CloudRendering, Linux64, OSXIntel64    # needed in order to select with getattr(sys.modules[__name__], ...)
 from networkx import find_cliques
 from torch import multiprocessing as mp
 from typing import List, Optional, Callable, Tuple
@@ -262,9 +262,10 @@ class FurnLiftEpisodeSamplers(object):
             env.reset(scene)
             scene_successfully_setup = False
             failure_reasons = []
-
-            # position agents and objects in scene
             for _ in range(10):
+
+                # action "DisableAllObjectsOfType" has been removed, because it removes Television from scene
+
                 for agent_id in range(self.num_agents):
                     env.randomize_agent_location(
                         agent_id=agent_id,
@@ -275,7 +276,9 @@ class FurnLiftEpisodeSamplers(object):
                         only_initially_reachable=True,
                     )
 
-                # randomly place objects in scene
+                # action "RandomlyCreateAndPlaceObjectOnFloor" has been removed, because it does not create a new Television anymore
+                # randomly place objects in scene instead
+
                 env.step(
                     {
                         "action": "InitialRandomSpawn",
@@ -306,10 +309,10 @@ class FurnLiftEpisodeSamplers(object):
                         round(object["position"]["x"] + t[0], 2),
                         round(object["position"]["z"] + t[1], 2),
                     )
+                    # TELEVISION_ROTATION_TO_OCCUPATIONS has been altered to support 45° rotations
                     for t in CONSTANTS.TELEVISION_ROTATION_TO_OCCUPATIONS[obj_rot]
                 )
 
-                # TODO: why randomizing the agent again?
                 for agent_id in range(self.num_agents):
                     env.randomize_agent_location(
                         agent_id=agent_id,
@@ -371,7 +374,6 @@ class FurnLiftEpisodeSamplers(object):
                                 itertools.combinations(clique, env.num_agents)
                             )
                     
-                    print(good_cliques)
                     if len(good_cliques) == 0:
                         
                         failure_reasons.append(f" Failed to find a tuple of {env.num_agents} targets all {self.min_dist_between_agents_to_pickup} steps apart.")
