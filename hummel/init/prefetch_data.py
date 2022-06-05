@@ -18,6 +18,7 @@ clip.load('ViT-L/14@336px', device='cpu', download_root=join(rootDirectory, 'dat
 CIFAR100(root=join(rootDirectory, 'data/external/torchvision/datasets/'), download=True, train=False)               # load dataset
 
 try:
-    Controller(platform=CloudRendering)                                                                             # load environment
+    controller = Controller(platform=CloudRendering)                                                                # load environment
+    controller.stop()                                                                                               # make sure to close the controller again
 except:
     pass                                                                                                            # no need to show exceptions

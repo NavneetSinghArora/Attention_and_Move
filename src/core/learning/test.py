@@ -10,17 +10,17 @@ import numpy as np
 import torch
 import torch.multiprocessing as mp
 import torch.nn as nn
-import cordialsync.utilities.debug as debug
+import src.core.utils.debug as debug
 import matplotlib as mpl
 
 from setproctitle import setproctitle as ptitle
 from typing import Optional
 
-from cordialsync.learning.multiagent import MultiAgent
-from cordialsync.experiments.experiment import ExperimentConfig
-from cordialsync.utilities.furnmove import save_agents_path_without_frame_png
-from cordialsync.utilities.net import recursively_detach
-from cordialsync.utilities.multiagent import (
+from src.core.learning.multiagent import MultiAgent
+from src.core.experiments.experiment import ExperimentConfig
+from src.core.utils.furnmove import save_agents_path_without_frame_png
+from src.core.utils.net import recursively_detach
+from src.core.utils.multiagent import (
     compute_losses_no_backprop,
     EndProcessException,
 )

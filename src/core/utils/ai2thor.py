@@ -2,7 +2,7 @@ import numpy as np
 
 from typing import Dict, Sequence, Tuple
 
-import cordialsync.utilities.constants as CONSTANTS
+import src.core.utils.constants as CONSTANTS
 
 
 def manhattan_dists_between_positions(

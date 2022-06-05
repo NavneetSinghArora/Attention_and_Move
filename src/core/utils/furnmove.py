@@ -12,11 +12,11 @@ import numpy as np
 import torch
 from matplotlib import pyplot as plt
 
-import cordialsync.utilities.constants as CONSTANTS
-from cordialsync.learning.agent import A3CAgent
-from cordialsync.learning.multiagent import MultiAgent
-from cordialsync.ai2thor.episodes import MultiAgentAI2ThorEpisode
-from cordialsync.utilities.visualization import get_agent_map_data, visualize_agent_path
+import src.core.utils.constants as CONSTANTS
+from src.core.learning.agent import A3CAgent
+from src.core.learning.multiagent import MultiAgent
+from src.core.ai2thor.episodes import MultiAgentAI2ThorEpisode
+from src.core.utils.visualization import get_agent_map_data, visualize_agent_path
 
 
 def step_results_to_data_to_save_for_furnlift_experiment(

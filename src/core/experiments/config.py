@@ -1,9 +1,9 @@
 from torch import nn
 from typing import Optional
 
-from cordialsync.learning.multiagent import MultiAgent
-from cordialsync.experiments.base import FurnLiftBaseConfig
-from cordialsync.learning.model import Model
+from src.core.learning.multiagent import MultiAgent
+from src.core.experiments.base import FurnLiftBaseConfig
+from src.core.learning.model import Model
 
 
 # originally furnlift_vision_mixture_cl_config.py

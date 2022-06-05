@@ -20,7 +20,7 @@ import re
 import itertools
 
 
-import cordialsync.utilities.misc as misc
+import src.core.utils.misc as misc
 
 
 def outline_square(frame, row, col, num_grids=7, stroke=2):

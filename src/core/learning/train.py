@@ -12,14 +12,14 @@ import torch.optim as optim
 from setproctitle import setproctitle as ptitle
 from torch import nn
 
-from cordialsync.learning.multiagent import MultiAgent
-from cordialsync.experiments.experiment import ExperimentConfig
-from cordialsync.utilities.multiagent import (
+from src.core.learning.multiagent import MultiAgent
+from src.core.experiments.experiment import ExperimentConfig
+from src.core.utils.multiagent import (
     TrainingCompleteException,
     EndProcessException,
     compute_losses_and_backprop,
 )
-from cordialsync.utilities.net import recursively_detach
+from src.core.utils.net import recursively_detach
 
 warnings.simplefilter("always", UserWarning)
 

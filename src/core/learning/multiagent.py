@@ -6,10 +6,10 @@ import torch.nn.functional as F
 from torch import nn
 from typing import Tuple, Dict, Union, Optional, List, Any, Sequence
 
-import cordialsync.utilities.net as net
-from cordialsync.learning.episode import Episode
-from cordialsync.learning.agent import EnvType, RLAgent, A3CAgent
-from cordialsync.utilities.misc import (
+import src.core.utils.net as net
+from src.core.learning.episode import Episode
+from src.core.learning.agent import EnvType, RLAgent, A3CAgent
+from src.core.utils.misc import (
     log_sum_exp,
     outer_product,
     joint_probability_tensor_from_mixture,

@@ -9,9 +9,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import cordialsync.utilities.net as net
-from cordialsync.utilities.misc import huber_loss
-from cordialsync.learning.episode import Episode
+import src.core.utils.net as net
+from src.core.utils.misc import huber_loss
+from src.core.learning.episode import Episode
 
 EnvType = TypeVar("EnvType")
 

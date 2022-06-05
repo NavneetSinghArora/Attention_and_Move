@@ -4,7 +4,7 @@ This script offers the CLI interface for the entire project.
 
 # Importing python libraries for required processing
 from hummel.commands import Hummel
-from src.core.utils.global_variables import GlobalVariables
+from src.core.utils.properties.global_variables import GlobalVariables
 from src.core.utils.simulator.simulator_variables import SimulatorVariables
 from src.core.model.simulator.environment import Environment
 from pathlib import Path

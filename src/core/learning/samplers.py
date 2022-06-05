@@ -10,13 +10,13 @@ from networkx import find_cliques
 from torch import multiprocessing as mp
 from typing import List, Optional, Callable, Tuple
 
-import cordialsync.utilities.constants as CONSTANTS
-from cordialsync.ai2thor.environment import AI2ThorEnvironmentWithGraph
-from cordialsync.learning.episodes import JointNavigationEpisode
-from cordialsync.learning.multiagent import MultiAgent
-from cordialsync.utilities.sampler import create_environment, save_talk_reply_data_frame
-from cordialsync.utilities.ai2thor import manhattan_dists_between_positions
-from cordialsync.utilities.multiagent import TrainingCompleteException
+import src.core.utils.constants as CONSTANTS
+from src.core.ai2thor.environment import AI2ThorEnvironmentWithGraph
+from src.core.learning.episodes import JointNavigationEpisode
+from src.core.learning.multiagent import MultiAgent
+from src.core.utils.sampler import create_environment, save_talk_reply_data_frame
+from src.core.utils.ai2thor import manhattan_dists_between_positions
+from src.core.utils.multiagent import TrainingCompleteException
 
 
 class FurnLiftEpisodeSamplers(object):

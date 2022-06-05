@@ -4,7 +4,7 @@ This file is used to set up and initialize all the global variable required in t
 
 # Importing required python libraries for processing
 from os.path import join
-from src.core.utils.property_loader import LoadProperties
+from src.core.utils.properties.property_loader import LoadProperties
 
 
 class GlobalVariables:

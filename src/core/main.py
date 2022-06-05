@@ -19,13 +19,13 @@ from tensorboardX import SummaryWriter
 from torch import nn
 from typing import Optional
 
-from cordialsync.experiments.config import get_experiment
-from cordialsync.learning.optimizer import SharedAdam, SharedRMSprop
-from cordialsync.learning.test import test
-from cordialsync.learning.train import train
-from cordialsync.utilities.arguments import parse_arguments
-from cordialsync.utilities.misc import save_project_state_in_log
-from cordialsync.utilities.net import (
+from src.core.experiments.config import get_experiment
+from src.core.learning.optimizer import SharedAdam, SharedRMSprop
+from src.core.learning.test import test
+from src.core.learning.train import train
+from src.core.utils.arguments import parse_arguments
+from src.core.utils.misc import save_project_state_in_log
+from src.core.utils.net import (
     ScalarMeanTracker,
     load_model_from_state_dict,
     TensorConcatTracker,

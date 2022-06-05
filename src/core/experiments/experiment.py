@@ -3,8 +3,8 @@ import torch
 from torch import nn
 from typing import Dict, Callable, Any, List, Optional
 
-from cordialsync.learning.agent import RLAgent
-from cordialsync.learning.multiagent import MultiAgent
+from src.core.learning.agent import RLAgent
+from src.core.learning.multiagent import MultiAgent
 
 
 class ExperimentConfig(abc.ABC):

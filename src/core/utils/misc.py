@@ -16,7 +16,7 @@ from threading import Thread
 from typing import Optional, Tuple, Sequence, Dict, Union
 from queue import Queue, Empty
 
-import cordialsync.utilities.constants as CONSTANTS
+import src.core.utils.constants as CONSTANTS
 
 
 def pad_matrix_to_size_topleft(

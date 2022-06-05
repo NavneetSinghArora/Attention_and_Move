@@ -5,7 +5,7 @@ import os
 import pandas as pd
 from typing import Dict, List, Optional
 
-from cordialsync.ai2thor.environment import AI2ThorEnvironmentWithGraph
+from src.core.ai2thor.environment import AI2ThorEnvironmentWithGraph
 
 
 def create_environment(

@@ -1,3 +1,8 @@
+# Foreword:
+
+This project is based on https://github.com/allenai/cordial-sync
+Many thanks to the authors of the original code.
+
 # Flow of codebase:
 
 ## Setup.py- 

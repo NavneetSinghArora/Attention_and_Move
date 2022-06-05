@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from cordialsync.utilities.misc import norm_col_init, weights_init, outer_product, outer_sum
+from src.core.utils.misc import norm_col_init, weights_init, outer_product, outer_sum
 
 
 def _unfold_communications(speech_per_agent: torch.FloatTensor):

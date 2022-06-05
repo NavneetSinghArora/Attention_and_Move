@@ -4,8 +4,8 @@ from typing import Dict
 import torch
 from torch import nn, optim as optim
 
-from cordialsync.learning.multiagent import MultiAgent
-from cordialsync.utilities.misc import ensure_shared_grads
+from src.core.learning.multiagent import MultiAgent
+from src.core.utils.misc import ensure_shared_grads
 
 
 def compute_losses_no_backprop(agent: MultiAgent):

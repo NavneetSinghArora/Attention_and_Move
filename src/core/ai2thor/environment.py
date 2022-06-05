@@ -11,12 +11,13 @@ import networkx as nx
 import numpy as np
 
 from ai2thor.controller import Controller
+from ai2thor.server import Event
 from collections import defaultdict
 from typing import Tuple, Dict, List, Set, Union, Any, Optional, Mapping
 
-import cordialsync.utilities.constants as CONSTANTS
-from cordialsync.utilities.ai2thor import pad_matrix_to_size_center, pad_matrix
-from cordialsync.utilities.misc import round_to_factor
+import src.core.utils.constants as CONSTANTS
+from src.core.utils.ai2thor import pad_matrix_to_size_center, pad_matrix
+from src.core.utils.misc import round_to_factor
 
 
 class AI2ThorEnvironment(object):
@@ -76,7 +77,7 @@ class AI2ThorEnvironment(object):
         )
 
     @property
-    def last_event(self) -> ai2thor.server.Event:
+    def last_event(self) -> Event:
         return self.controller.last_event
 
     @property
@@ -559,7 +560,7 @@ class AI2ThorEnvironment(object):
 
     def step(
         self, action_dict: Dict[str, Union[str, int, float]]
-    ) -> ai2thor.server.Event:
+    ) -> Event:
         action = action_dict["action"]
         agent_id = action_dict.get("agentId")
         if agent_id is not None:

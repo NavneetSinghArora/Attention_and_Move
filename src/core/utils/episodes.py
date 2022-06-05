@@ -3,9 +3,9 @@ import numpy as np
 from enum import Enum
 from typing import Sequence, Tuple, Callable
 
-import cordialsync.utilities.constants as CONSTANTS
-from cordialsync.ai2thor.environment import AI2ThorEnvironment
-from cordialsync.utilities.misc import all_equal
+import src.core.utils.constants as CONSTANTS
+from src.core.ai2thor.environment import AI2ThorEnvironment
+from src.core.utils.misc import all_equal
 
 
 class CoordType(Enum):

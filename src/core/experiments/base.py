@@ -3,11 +3,11 @@ from typing import Callable, Optional
 
 import torch
 
-import cordialsync.utilities.constants as CONSTANTS
-from cordialsync.experiments.experiment import ExperimentConfig
-from cordialsync.learning.episodes import FurnLiftNApartStateEpisode
-from cordialsync.learning.multiagent import MultiAgent
-from cordialsync.learning.samplers import FurnLiftEpisodeSamplers
+import src.core.utils.constants as CONSTANTS
+from src.core.experiments.experiment import ExperimentConfig
+from src.core.learning.episodes import FurnLiftNApartStateEpisode
+from src.core.learning.multiagent import MultiAgent
+from src.core.learning.samplers import FurnLiftEpisodeSamplers
 
 
 class FurnLiftBaseConfig(ExperimentConfig, ABC):

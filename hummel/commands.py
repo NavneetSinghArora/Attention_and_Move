@@ -10,4 +10,4 @@ class Hummel:
 
     @staticmethod
     def train():
-        os.system('python {}/../cordialsync/main.py'.format(os.path.dirname(os.path.realpath(__file__))))
+        os.system('python {}/../src/core/main.py'.format(os.path.dirname(os.path.realpath(__file__))))

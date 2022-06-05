@@ -1,8 +1,8 @@
 from abc import abstractmethod, ABC
 from typing import Dict, Any, Optional, Sequence, Tuple, List
 
-from cordialsync.ai2thor.environment import AI2ThorEnvironment
-from cordialsync.learning.episode import Episode, MultiAgentEpisode
+from src.core.ai2thor.environment import AI2ThorEnvironment
+from src.core.learning.episode import Episode, MultiAgentEpisode
 
 
 class AI2ThorEpisode(Episode[AI2ThorEnvironment]):

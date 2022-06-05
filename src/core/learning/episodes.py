@@ -2,10 +2,10 @@ import itertools
 import matplotlib as mpl
 from typing import Tuple, Dict, List, Any, Union
 
-from cordialsync.ai2thor.environment import AI2ThorEnvironmentWithGraph
-from cordialsync.ai2thor.episodes import MultiAgentAI2ThorEpisode
-from cordialsync.utilities.episodes import are_actions_coordinated, coordination_type_tensor
-from cordialsync.utilities.ai2thor import manhattan_dists_between_positions
+from src.core.ai2thor.environment import AI2ThorEnvironmentWithGraph
+from src.core.ai2thor.episodes import MultiAgentAI2ThorEpisode
+from src.core.utils.episodes import are_actions_coordinated, coordination_type_tensor
+from src.core.utils.ai2thor import manhattan_dists_between_positions
 
 mpl.use("Agg", force=False)
 
