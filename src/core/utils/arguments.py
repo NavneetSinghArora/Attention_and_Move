@@ -7,6 +7,7 @@ def str2bool(v):
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="A3C")
+    parser.add_argument("--platform", type=str, default="CloudRendering", help="Choose the platform AI2THOR will be running on. Can be Headless Linux (value=CloudRendering), Linux (value=Linux64) and OSX (value=OSXIntel64)")
     parser.add_argument("--experiment_dir", type=str, default="rl_multi_agent/experiments", help="The directory to look in to find the config file for this run. (default `rl_multi_agent/experiments`)")
     parser.add_argument("--tag", type=str, default="", help="A tag for the run (e.g. lstm-not-gru, trying-new-thing). If not-empty, this tag is used as a subdirectory along the tensorboard path. (default: '')")
     parser.add_argument("--lr", type=float, default=0.0001, metavar="LR", help="Learning rate (default: 0.0001).")

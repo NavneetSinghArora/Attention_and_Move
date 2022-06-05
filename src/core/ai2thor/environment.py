@@ -6,11 +6,11 @@ import os
 import random
 import sys
 import warnings
-import ai2thor.server
 import networkx as nx
 import numpy as np
 
 from ai2thor.controller import Controller
+from ai2thor.platform import CloudRendering, Linux64, OSXIntel64
 from ai2thor.server import Event
 from collections import defaultdict
 from typing import Tuple, Dict, List, Set, Union, Any, Optional, Mapping
@@ -30,12 +30,12 @@ class AI2ThorEnvironment(object):
         num_agents: int = 1,
         visible_agents: bool = True,
         render_depth_image: bool = False,
-        headless: bool = False,
+        platform = CloudRendering,
         always_return_visible_range: bool = False,
         allow_agents_to_intersect: bool = False,
     ) -> None:
         self.num_agents = num_agents
-        self.controller = Controller(headless=headless)
+        self.controller = Controller(platform=platform)
         self._initially_reachable_points: Optional[List[Dict]] = None
         self._initially_reachable_points_set: Optional[Set[Dict]] = None
         self._started = False
@@ -50,7 +50,7 @@ class AI2ThorEnvironment(object):
         )
         self.visible_agents = visible_agents
         self.render_depth_image = render_depth_image
-        self.headless = headless
+        self.platform = platform
         self.always_return_visible_range = always_return_visible_range
         self.allow_agents_to_intersect = allow_agents_to_intersect
 
@@ -93,11 +93,11 @@ class AI2ThorEnvironment(object):
         quality="Very Low",
     ) -> None:
 
-        if self.headless and (player_screen_height != 300 or player_screen_height != 300):
+        if self.platform == CloudRendering and (player_screen_height != 300 or player_screen_height != 300):
             warnings.warn("In headless mode but choosing non-default player screen width/height, will be ignored.")
 
         if player_screen_width < 300 or player_screen_height < 300:
-            if not self.headless:
+            if self.platform != CloudRendering:
                 self.controller.step(
                     {
                         "action": "ChangeResolution",

@@ -5,7 +5,9 @@ import warnings
 import networkx as nx
 import numpy as np
 import torch
+import sys
 
+from ai2thor.platform import CloudRendering, Linux64, OSXIntel64
 from networkx import find_cliques
 from torch import multiprocessing as mp
 from typing import List, Optional, Callable, Tuple
@@ -102,6 +104,7 @@ class FurnLiftEpisodeSamplers(object):
                     env_args=self.env_args,
                     visible_agents=self.visible_agents,
                     render_depth_image=self.include_depth_frame,
+                    platform=getattr(sys.modules[__name__], self.env_args.platform),
                     allow_agents_to_intersect=self.allow_agents_to_intersect,
                 )
                 env.start(

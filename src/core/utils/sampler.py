@@ -5,6 +5,7 @@ import os
 import pandas as pd
 from typing import Dict, List, Optional
 
+from ai2thor.platform import CloudRendering, Linux64, OSXIntel64
 from src.core.ai2thor.environment import AI2ThorEnvironmentWithGraph
 
 
@@ -13,7 +14,7 @@ def create_environment(
     env_args,
     visible_agents: bool,
     render_depth_image: bool,
-    headless: bool = False,
+    platform = CloudRendering,
     **environment_args,
 ) -> AI2ThorEnvironmentWithGraph:
     env = AI2ThorEnvironmentWithGraph(
@@ -21,7 +22,7 @@ def create_environment(
         restrict_to_initially_reachable_points=True,
         visible_agents=visible_agents,
         render_depth_image=render_depth_image,
-        headless=headless,
+        platform=platform,
         **environment_args,
     )
     return env
