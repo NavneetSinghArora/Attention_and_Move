@@ -21,25 +21,26 @@
 #   
 # ==========================================================================
 
-# get current path
-path=$(dirname "$0")
+# get current paths
+PROJECT_ROOT_DIR=$(python -c "from src.core.utils.constants import PROJECT_ROOT_DIR; print(PROJECT_ROOT_DIR)")
+SCRIPT_PATH=$(dirname "$0")
 
 # prefetch all data sources (.ai2thor & data)
-python $path/prefetch_data.py
+python $SCRIPT_PATH/prefetch_data.py
 
 # create singularity container (requires singularity installed)
-sudo singularity build $path/container.sif $path/container.def
+sudo singularity build $SCRIPT_PATH/container.sif $SCRIPT_PATH/container.def
 
 # copy data from local to Hummel via sftp
 sftp hummel1 <<EOF
     mkdir /home/$1/jobs
     mkdir /work/$1/.ai2thor
     mkdir /work/$1/.config
-    put -r $path/../jobs /home/$1
+    put -r $SCRIPT_PATH/../jobs /home/$1
     put -r $HOME/.ai2thor /work/$1
     put -r $HOME/.config/unity3d /work/$1/.config
-    put -r $path/../../data /work/$1
-    put $path/container.sif /usw/$1
+    put -r $PROJECT_ROOT_DIR/data /work/$1
+    put $SCRIPT_PATH/container.sif /usw/$1
     bye
 EOF
 

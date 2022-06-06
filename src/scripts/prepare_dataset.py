@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import csv
 import re
 
+from src.core.utils.constants import PROJECT_ROOT_DIR
+
 
 class PrepareDataset:
 
@@ -62,7 +64,7 @@ class PrepareDataset:
         plt.imshow(rgb_frame)
         plt.axis('off')
         image_name = 'image_' + str(image_count) + '.png'
-        plt.savefig(self.global_properties['root_directory'] + '/output/dataset/images/' + collectable_scene + '_' + floor + '_' + image_name,
+        plt.savefig(PROJECT_ROOT_DIR + '/output/dataset/images/' + collectable_scene + '_' + floor + '_' + image_name,
                     bbox_inches='tight', pad_inches=0)
 
         images_objects = frame_object
@@ -75,7 +77,7 @@ class PrepareDataset:
 
                 data = [item_name, item_size, item_center, item_corners]
                 annotation_file_name = 'image_' + str(image_count) + '.csv'
-                with open(self.global_properties['root_directory'] + '/output/dataset/annotations/' + collectable_scene + '_' + floor + '_' + annotation_file_name, 'a',
+                with open(PROJECT_ROOT_DIR + '/output/dataset/annotations/' + collectable_scene + '_' + floor + '_' + annotation_file_name, 'a',
                           encoding='UTF8') as file:
                     writer = csv.writer(file)
                     writer.writerow(data)

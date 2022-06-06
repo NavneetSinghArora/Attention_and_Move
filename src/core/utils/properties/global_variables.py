@@ -4,6 +4,8 @@ This file is used to set up and initialize all the global variable required in t
 
 # Importing required python libraries for processing
 from os.path import join
+
+from src.core.utils.constants import PROJECT_ROOT_DIR
 from src.core.utils.properties.property_loader import LoadProperties
 
 
@@ -20,8 +22,7 @@ class GlobalVariables:
         """
 
         if not self.__instance_created:
-            self.global_properties = {'root_directory': kwargs['package_root']}
-            self.global_properties['global_configurations'] = join(self.global_properties['root_directory'], 'resources/project/configuration.properties')
+            self.global_properties['global_configurations'] = join(PROJECT_ROOT_DIR, 'resources/project/configuration.properties')
 
             self.load_properties = LoadProperties(self.global_properties)
 

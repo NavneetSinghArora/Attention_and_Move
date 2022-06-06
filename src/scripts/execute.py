@@ -1,27 +1,13 @@
 """
 This script offers the CLI interface for the entire project.
 """
-
-# Importing python libraries for required processing
-from hummel.commands import Hummel
-from src.core.utils.properties.global_variables import GlobalVariables
-from src.core.utils.simulator.simulator_variables import SimulatorVariables
-from src.core.model.simulator.environment import Environment
-from pathlib import Path
 import click
 
-CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
-
-
-def get_package_root():
-    """
-    Thi function fetches the path to the parent directory and returns the path as a string.
-
-    Returns:
-        path ():    Path to the root directory of the project as a string.
-    """
-
-    return str(Path(__file__).parent.resolve().parent.resolve().parent.resolve())
+from hummel.commands import Hummel
+from src.core.model.simulator.environment import Environment
+from src.core.utils.constants import CONTEXT_SETTINGS, PROJECT_ROOT_DIR
+from src.core.utils.properties.global_variables import GlobalVariables
+from src.core.utils.simulator.simulator_variables import SimulatorVariables
 
 
 def initialize_simulator(global_properties):
@@ -57,10 +43,7 @@ def _init(**kwargs):
     """
     Initialize the global system properties.
     """
-
-    # Initializing the parent root directory for path configuration.
-    kwargs['package_root'] = get_package_root()
-
+    
     # Initializing the Global Variables which will be available throughout the project.
     global_variables = GlobalVariables(**kwargs)
     global_variables.load_configuration_properties()
@@ -117,8 +100,8 @@ def training(**kwargs):
 @click.option('-w', '--workers',is_flag=False, type=int, default=1, show_default=True, help='Number of training processes')
 @click.option('-n', '--num_steps', is_flag=False, type=int, default=50, show_default=True, help='Number of forward steps in A3C')
 @click.option('-f', '--save_freq', is_flag=False, type=int, default=1e6, show_default=True, help='Number of training episodes till save')
-@click.option('-c', '--checkpoints_dir', is_flag=False, type=str, default='output/checkpoints/', show_default=True, help='Folder for trained checkpoints')
-@click.option('-m', '--use_checkpoint', is_flag=False, type=str, default='', show_default=True, help='Checkpoint to resume training from')
+@click.option('-d', '--checkpoints_dir', is_flag=False, type=str, default='output/checkpoints/', show_default=True, help='Folder for trained checkpoints')
+@click.option('-c', '--use_checkpoint', is_flag=False, type=str, default='', show_default=True, help='Checkpoint to resume training from')
 @click.option('-e', '--max_ep', is_flag=False, type=float, default='inf', show_default=True, help='Maximum number of episodes')
 @click.option('-v', '--visualize_test_agent', is_flag=False, type=bool, default=False, show_default=True, help='Create plots and graphics for test agent')
 @click.option('-q', '--use_episode_init_queue', is_flag=False, type=bool, default=False, show_default=True, help='Necessary when evaluating models on fixed datasets')

@@ -1,7 +1,10 @@
 import matplotlib.pyplot as plt
+
 from os import makedirs
 from os.path import join
 from PIL import Image
+
+from src.core.utils.constants import PROJECT_ROOT_DIR
 
 
 class Viewer(object):
@@ -27,7 +30,7 @@ class Viewer(object):
                 self._img.append(self._axs[row, col].imshow(Image.new(mode='RGB', size=[300, 300], color='white')))
 
     @classmethod
-    def update(self, multiAgentEvent, moveNumber: int, saveFigure: bool, rootDirectory):
+    def update(self, multiAgentEvent, moveNumber: int, saveFigure: bool):
         
         for i,e in enumerate(multiAgentEvent.events):
             self._axs[0, i].set_title(f'AgentId: {i}')
@@ -41,7 +44,7 @@ class Viewer(object):
 
         if saveFigure:
             try:
-                makedirs(join(rootDirectory, 'output/agent_movements/'), exist_ok=True)
-                plt.savefig(join(rootDirectory, 'output/agent_movements/' + 'Move_' + str(moveNumber) + '_.png'))
+                makedirs(join(PROJECT_ROOT_DIR, 'output/agent_movements/'), exist_ok=True)
+                plt.savefig(join(PROJECT_ROOT_DIR, 'output/agent_movements/' + 'Move_' + str(moveNumber) + '.png'))
             except FileExistsError:
                 pass
