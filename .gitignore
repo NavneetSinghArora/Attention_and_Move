@@ -1,9 +1,6 @@
 __pycache__
 Attention_and_Move.egg-info
 data
-logs
 mnist
 output
-runs
-spatialattention
 *.sif
