@@ -1054,6 +1054,8 @@ class AI2ThorEnvironmentWithGraph(AI2ThorEnvironment):
 
     def _check_contains_key(self, key: Tuple[float, float, int, int], add_if_not=True):
         if key not in self.graph:
+            # UserWarning: (-3.5, 6.0, 90, 30) was not in the graph for scene FloorPlan201_physics.
+            # TODO: check if this is only happening in FloorPlan201_physics and why!
             warnings.warn(
                 "{} was not in the graph for scene {}.".format(key, self.scene_name)
             )

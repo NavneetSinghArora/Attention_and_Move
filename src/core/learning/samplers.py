@@ -375,7 +375,7 @@ class FurnLiftEpisodeSamplers(object):
                             )
                     
                     if len(good_cliques) == 0:
-                        
+                        # TODO: This failure is only thrown in FloorPlanN_physics, with N = {203, 209, 210, 214, 216}. Remove these scenes from pool or find solution!
                         failure_reasons.append(f" Failed to find a tuple of {env.num_agents} targets all {self.min_dist_between_agents_to_pickup} steps apart.")
                         continue
 
