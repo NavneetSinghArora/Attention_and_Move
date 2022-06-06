@@ -15,6 +15,8 @@ class FurnLiftMinDistMixtureConfig(FurnLiftBaseConfig):
     turn_off_communication = False              # Model config
     agent_class = MultiAgent                    # Agent config
     coordinate_actions = True                   # Mixture (SYNC-Policies)
+    _checkpoints_dir = ''                       # Path for checkpoints
+    _use_checkpoint = ''                        # Path to specific checkpoint to proceed from
 
     @classmethod
     def create_model(cls, **kwargs) -> nn.Module:
@@ -50,9 +52,20 @@ class FurnLiftMinDistMixtureConfig(FurnLiftBaseConfig):
         )
 
     @property
-    def saved_model_path(self) -> Optional[str]:
-        return None
+    def checkpoints_dir(self) -> Optional[str]:
+        return self._checkpoints_dir
 
+    @checkpoints_dir.setter
+    def checkpoints_dir(self, value):
+        self._checkpoints_dir = value
+
+    @property
+    def use_checkpoint(self) -> Optional[str]:
+        return self._use_checkpoint
+
+    @use_checkpoint.setter
+    def use_checkpoint(self, value):
+        self._use_checkpoint = value
 
 def get_experiment():
     return FurnLiftMinDistMixtureConfig()

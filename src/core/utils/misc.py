@@ -191,13 +191,14 @@ def fibonacci_sphere(samples=1):
 def save_project_state_in_log(
     call,
     local_start_time_str,
-    dependent_data_paths: Optional[Tuple[str, ...]] = None,
-    log_dir: str = "logs/",
+    checkpoints_dir,
+    use_checkpoint,
+    log_dir: str = "output/logs/"
 ):
     short_sha = (
         subprocess.check_output(["git", "describe", "--always"]).strip().decode("utf-8")
     )
-    log_file_path = log_dir + local_start_time_str
+    log_file_path = os.path.join(log_dir, local_start_time_str)
     diff_path = os.path.join(log_file_path, "git-diff.txt")
     sha_path = os.path.join(log_file_path, "sha.txt")
     if not os.path.exists(log_file_path):
@@ -210,17 +211,18 @@ def save_project_state_in_log(
         f.write(short_sha)
 
     # Save data that we are dependent on (e.g. previously trained models)
-    if dependent_data_paths is not None:
-        for path in dependent_data_paths:
-            if path is not None:
-                hash = get_hash_of_file(path)
-                new_path = os.path.join(log_dir, "saved_data", hash + ".dat")
-                if not os.path.exists(new_path):
-                    shutil.copyfile(path, new_path)
-                with open(
-                    os.path.join(log_file_path, "saved_files_to_hashes.txt"), "a"
-                ) as f:
-                    f.write("{}\t{}\n".format(path, hash))
+
+    if use_checkpoint != "":
+        dependent_data_path = os.path.join(checkpoints_dir, use_checkpoint)
+        print(dependent_data_path)
+        hash = get_hash_of_file(dependent_data_path)
+        new_path = os.path.join(log_dir, hash + ".dat")
+        if not os.path.exists(new_path):
+            shutil.copyfile(dependent_data_path, new_path)
+        with open(
+            os.path.join(log_file_path, "saved_files_to_hashes.txt"), "a"
+        ) as f:
+            f.write("{}\t{}\n".format(dependent_data_path, hash))
 
     # Finally save the call made to main
     with open(os.path.join(log_file_path, "call.json"), "w") as f:

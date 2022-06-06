@@ -43,19 +43,19 @@ if __name__ == "__main__":
     experiment = get_experiment()
     experiment.init_train_agent.env_args = args
     experiment.init_test_agent.env_args = args
+    experiment.checkpoints_dir = args.checkpoints_dir
+    experiment.use_checkpoint = args.use_checkpoint
 
     start_time = time.time()
     local_start_time_str = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime(start_time))
 
     if args.enable_logging:
         # Caching current state of the project
-        log_file_path = save_project_state_in_log(
-            sys.argv,
+        log_file_path = save_project_state_in_log(sys.argv,
             local_start_time_str,
-            None
-            if experiment.saved_model_path is None
-            else (experiment.saved_model_path,),
-            args.log_dir,
+            experiment.checkpoints_dir,
+            experiment.use_checkpoint,
+            args.log_dir
         )
         # Create a tensorboard logger
         log_writer = SummaryWriter(log_file_path)
@@ -68,8 +68,8 @@ if __name__ == "__main__":
             s += str(getattr(args, arg)) + " "
         log_writer.add_text("call/full", s, 0)
         log_writer.add_text("log-path/", log_file_path, 0)
-        if experiment.saved_model_path is not None:
-            log_writer.add_text("model-load-path", experiment.saved_model_path, 0)
+        if experiment.checkpoints_dir is not None:
+            log_writer.add_text("model-load-path", experiment.checkpoints_dir, 0)
 
     # Seed (hopefully) all sources of randomness
     np.random.seed(args.seed)
@@ -93,10 +93,10 @@ if __name__ == "__main__":
 
     optimizer_state = None
     restarted_from_episode = None
-    if experiment.saved_model_path is not None:
-        path = experiment.saved_model_path
+    if experiment.use_checkpoint != '':
+        path = os.path.join(experiment.checkpoints_dir, experiment.use_checkpoint) 
         saved_state = torch.load(path, map_location=lambda storage, loc: storage)
-        print("\nLoading pretrained weights from {}...".format(path))
+        print("Loading pretrained weights from {}...".format(path))
         if "model_state" in saved_state:
             load_model_from_state_dict(shared_model, saved_state["model_state"])
             optimizer_state = saved_state["optimizer_state"]
@@ -277,13 +277,13 @@ if __name__ == "__main__":
                     train_total_ep.value == args.max_ep
                     or (train_total_ep.value % args.save_freq) == 0
                 ):
-                    if not os.path.exists(args.save_model_dir):
-                        os.makedirs(args.save_model_dir, exist_ok=True)
+                    if not os.path.exists(args.checkpoints_dir):
+                        os.makedirs(args.checkpoints_dir, exist_ok=True)
 
                     state_to_save = shared_model.state_dict()
                     save_path = os.path.join(
-                        args.save_model_dir,
-                        "{}_{}_{}.dat".format(
+                        args.checkpoints_dir,
+                        "{}_{}.dat".format(
                             train_total_ep.value, local_start_time_str
                         ),
                     )
