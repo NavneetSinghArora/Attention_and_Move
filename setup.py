@@ -22,7 +22,7 @@ else:
 python_version = ''.join(platform.python_version_tuple()[0:2])
 
 requirements = [
-    "ai2thor==4.2.0",
+    "ai2thor==4.3.0",
     "aws-requests-auth==0.4.3",
     "botocore==1.26.4",
     "certifi==2020.6.20",
