@@ -15,3 +15,7 @@ class Hummel:
     def train(kwargs):
         parameters = ' '.join(["--" + key + "=" + str(value) for key, value in kwargs.items()])
         system(f'python {PROJECT_ROOT_DIR}/src/core/main.py {parameters}')
+
+    @staticmethod
+    def mnist():
+        system(f'python {PROJECT_ROOT_DIR}/mnist/mnist_hogwild.py')

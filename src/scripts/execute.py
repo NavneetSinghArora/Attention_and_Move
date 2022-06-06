@@ -94,6 +94,7 @@ def training(**kwargs):
 @click.option('-u', '--user', is_flag=False, help='UHH username, i.e. ba*####')
 @click.option('-i', '--init', is_flag=True, help='Initialize AAM on Hummel')
 @click.option('-t', '--train', is_flag=True, help='Start training on Hummel')
+@click.option('-m', '--mnist', is_flag=True, help='Start MNIST-Test')
 @click.option('-p', '--platform', is_flag=False, default='CloudRendering', show_default=True, help='Choose between CloudRendering, Linux64, OSXIntel64') # only needed for local debugging
 @click.option('-l', '--lr', is_flag=False, type=float, default=0.0001, show_default=True, help='Learning rate')
 @click.option('-s', '--seed', is_flag=False, type=int, default=1, show_default=True, help='Random seed')
@@ -120,9 +121,14 @@ def hummel(**kwargs):
         kwargs.pop('user')
         kwargs.pop('init')
         kwargs.pop('train')
+        kwargs.pop('mnist')
 
         print("Start training on Hummel")
         Hummel.train(kwargs)
+
+    if kwargs['mnist']:
+        print("Start MNIST-Test")
+        Hummel.mnist()
 
 cli = click.CommandCollection(sources=[cli1, cli2])
 
