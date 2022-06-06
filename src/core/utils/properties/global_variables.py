@@ -22,6 +22,7 @@ class GlobalVariables:
         """
 
         if not self.__instance_created:
+            self.global_properties = {'root_directory': PROJECT_ROOT_DIR}
             self.global_properties['global_configurations'] = join(PROJECT_ROOT_DIR, 'resources/project/configuration.properties')
 
             self.load_properties = LoadProperties(self.global_properties)
