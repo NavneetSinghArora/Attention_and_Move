@@ -1,14 +1,12 @@
 import argparse
 import os
 import torch
-import torch.distributed as dist
 import torch.multiprocessing as mp
 
 from datetime import datetime
-from torch.nn.parallel import DistributedDataParallel as DDP
 from torchvision import datasets, transforms
 from mnist.model import MNIST
-from src.core.learning.optimizer import SharedAdam
+from mnist.optimizer import SharedAdam
 from mnist.train import train, test
 
 
@@ -39,8 +37,8 @@ if __name__ ==  '__main__':
 
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
 
-    dataset1 = datasets.MNIST('../data', train=True, download=True, transform=transform)
-    dataset2 = datasets.MNIST('../data', train=False, transform=transform)
+    dataset1 = datasets.MNIST('{}/../data'.format(os.path.dirname(os.path.realpath(__file__))), train=True, download=True, transform=transform)
+    dataset2 = datasets.MNIST('{}/../data'.format(os.path.dirname(os.path.realpath(__file__))), train=False, transform=transform)
 
     kwargs = {'batch_size': args.batch_size, 'shuffle': True}
 
