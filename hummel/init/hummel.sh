@@ -45,4 +45,4 @@ sftp hummel1 <<EOF
 EOF
 
 # give advice on how to finalize initialization
-echo "Please finish initialization by running 'sh \$HOME/jobs/init.sh' on interactive Hummel shell."
+echo "Please finish initialization by running 'module load singularity && sh \$HOME/jobs/init.sh' on interactive Hummel shell."
