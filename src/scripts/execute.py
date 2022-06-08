@@ -93,6 +93,7 @@ def training(**kwargs):
 @cli2.command('hummel', context_settings=CONTEXT_SETTINGS)
 @click.option('-u', '--user', is_flag=False, help='UHH username, i.e. ba*####')
 @click.option('-i', '--init', is_flag=True, help='Initialize AAM on Hummel')
+@click.option('-m', '--mnist', is_flag=True, help='Start MNIST-Test')
 @click.option('-t', '--train', is_flag=True, help='Start training on Hummel')
 @click.option('-p', '--platform', is_flag=False, default='CloudRendering', show_default=True, help='Choose between CloudRendering, Linux64, OSXIntel64') # only needed for local debugging
 @click.option('-l', '--lr', is_flag=False, type=float, default=0.0001, show_default=True, help='Learning rate')
@@ -115,10 +116,15 @@ def hummel(**kwargs):
         else:
             print('Please provide your UHH username with the option --user=username and retry again!')
 
+    if kwargs['mnist']:
+        print("Start MNIST-Test")
+        Hummel.mnist()
+
     if kwargs['train']:
         # remove all parameters that may not be forwarded to main.py (all parameters not contained in arguments.py must be omitted!)
         kwargs.pop('user')
         kwargs.pop('init')
+        kwargs.pop('mnist')
         kwargs.pop('train')
 
         print("Start training on Hummel")
