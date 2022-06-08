@@ -201,7 +201,7 @@ def get_accuracy(test_loader, model):
         and torch.cuda.is_available() else "cpu")
     with torch.no_grad():
         for i, (data, target) in enumerate(test_loader):
-            out = model(data, -1)
+            out = model(data)
             pred = out.argmax(dim=1, keepdim=True)
             pred, target = pred.to(device), target.to(device)
             correct = pred.eq(target.view_as(pred)).sum().item()
@@ -225,29 +225,36 @@ if __name__ == '__main__':
     start = datetime.now()
 
     # get user variables from environment and torch
-    slurm_job_id = os.environ.get('SLURM_JOBID')                                                # '2033407'         - job id
-    nodelist = os.environ.get('SLURM_NODELIST')                                                 # 'node[321-322]'   - list of nodes
-    master_addr = os.environ.get('MASTER_ADDR')                                                 # 'node321'         - master address
-    master_port = int(os.environ.get('MASTER_PORT'))                                            # '23456'           - master port
-    world_size = int(os.environ.get('SLURM_NNODES'))                                            # '2'               - world size (number of nodes)
-    rank = int(os.environ.get('SLURM_PROCID'))                                                  # '0' or '1'        - rank (process id)
-    num_cpus = int(os.environ.get('SLURM_CPUS_ON_NODE'))                                        # '32'              - number of avaiable cpus on current node
-    num_gpus = 0    # torch.cuda.device_count()                                                 # '2'               - number of available cuda devices
+    slurm_job_id = os.environ.get('SLURM_JOBID')                            # '2033407'         - job id
+    nodelist = os.environ.get('SLURM_NODELIST')                             # 'node[321-322]'   - list of nodes
+    master_addr = os.environ.get('MASTER_ADDR')                             # 'node321'         - master address
+    master_port = int(os.environ.get('MASTER_PORT'))                        # '23456'           - master port
+    world_size = int(os.environ.get('SLURM_NNODES'))                        # '2'               - world size (number of nodes)
+    rank = int(os.environ.get('SLURM_PROCID'))                              # '0' or '1'        - rank (process id)
+    num_cpus = int(os.environ.get('SLURM_CPUS_ON_NODE'))                    # '32'              - number of avaiable cpus on current node
+    num_gpus = torch.cuda.device_count()                                    # '2'               - number of available cuda devices
 
     # print information
-    print(f"Job ID: {slurm_job_id}")
-    print(f"Master Address: {master_addr}")
-    print(f"Master Port: {master_port}")
-    print(f"Nodes: {nodelist}")
+    if rank == 0:
+        print("====================================================================")
+        print(f"Job ID: {slurm_job_id}")
+        print(f"Master Address: {master_addr}")
+        print(f"Master Port: {master_port}")
+        print(f"Nodes: {nodelist}")
+
+        print(f"Rank of Parameter Server: {rank}")
+        print(f"Number of CPUs of each Node: {num_cpus}")
+        print(f"Number of GPUs of each Node: {num_gpus}")
+
+        print(f"World Size: {world_size}")
+        print("====================================================================")
 
     print(f"Rank of current Node: {rank}")
-    print(f"Number of CPUs of current Node: {num_cpus}")
-    print(f"Number of GPUs of current Node: {num_gpus}")
-
-    print(f"World Size: {world_size}")
-    print("====================================================================")
+    print(f"Number of threads on current Node: {torch.get_num_threads()}")
 
     torch.multiprocessing.set_start_method('spawn')
+
+    num_gpus = 0                                                            # use only cpus
 
     processes = []
 
