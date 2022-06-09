@@ -1,12 +1,13 @@
+
+import matplotlib.pyplot as plt
+
 from os import makedirs
 from os.path import join
-import matplotlib.pyplot as plt
-from ai2thor.controller import Controller
-from ai2thor.platform import CloudRendering
+
+from src.core.utils.constants import PROJECT_ROOT_DIR
 
 
-
-def visualize_frames(rgb_frames, figsize, move_number, root_directory):
+def visualize_frames(rgb_frames, figsize, move_number):
     """Plots the rgb_frames for each agent."""
     fig, axs = plt.subplots(1, len(rgb_frames), figsize=figsize, facecolor='white', dpi=300)
     for i, frame in enumerate(rgb_frames):
@@ -18,7 +19,7 @@ def visualize_frames(rgb_frames, figsize, move_number, root_directory):
             print('Capturing the RGB Frame for the agents')
             try:
                 makedirs("output/agent_movements/", exist_ok=True)  # makes sure folder exists
-                plt.savefig(join(root_directory, 'output/agent_movements/' + 'Movement_' + str(move_number) + '_.png'))
+                plt.savefig(join(PROJECT_ROOT_DIR, 'output/agent_movements/' + 'Movement_' + str(move_number) + '_.png'))
             except FileExistsError:
                 pass
 

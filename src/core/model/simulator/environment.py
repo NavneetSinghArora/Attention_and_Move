@@ -3,13 +3,15 @@
 """
 
 # Importing python libraries for required processing
+import random
+import sys
+
 from ai2thor.controller import Controller
 from ai2thor.platform import CloudRendering, Linux64, OSXIntel64
+from src.core.utils.constants import PROJECT_ROOT_DIR
 from src.core.services.clip import predict_clip
 from src.core.services.viewer import Viewer
 from src.core.services.common_services import visualize_frames
-import random
-import sys
 
 
 class Environment:
@@ -28,9 +30,6 @@ class Environment:
 
         self.global_properties = global_properties
         self.simulator_properties = simulator_properties
-
-        # get global properties
-        self.rootDirectory = self.global_properties['root_directory']
 
         # get simulator properties
         self.agentCount = int(self.simulator_properties['number_of_agents'])
@@ -103,9 +102,9 @@ class Environment:
 
         # predicting image content using clip
         rgb_frames = [event.frame for event in initial_agent_1_event.events]
-        clip_output['agent0'] = predict_clip(rgb_frames[0], target_object, target_object_threshold, self.rootDirectory, self.simulator_properties)
-        clip_output['agent1'] = predict_clip(rgb_frames[1], target_object, target_object_threshold, self.rootDirectory, self.simulator_properties)
-        visualize_frames(rgb_frames, (8,8), 1, self.rootDirectory)
+        clip_output['agent0'] = predict_clip(rgb_frames[0], target_object, target_object_threshold, self.simulator_properties)
+        clip_output['agent1'] = predict_clip(rgb_frames[1], target_object, target_object_threshold, self.simulator_properties)
+        visualize_frames(rgb_frames, (8,8), 1, PROJECT_ROOT_DIR)
         print('CLIP shape: ', len(clip_output))
         # print('CLIP output Agent 0: ', clip_output['agent0'])
         # print('CLIP output Agent 1: ', clip_output['agent1'])
