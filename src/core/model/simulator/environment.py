@@ -5,7 +5,7 @@
 # Importing python libraries for required processing
 from ai2thor.controller import Controller
 from ai2thor.platform import CloudRendering, Linux64, OSXIntel64
-from src.core.services.clip import predict_clip
+# from src.core.services.clip import predict_clip
 from src.core.services.viewer import Viewer
 from src.core.services.common_services import visualize_frames
 from src.core.model.object_detection.clip_detection import ClipObjectDetection
@@ -87,7 +87,7 @@ class Environment:
         print('Agent Positions Randomized')
 
         target_object = self.simulator_properties['target_object']
-        clip_object_detection = ClipObjectDetection(self.global_properties, self.simulator_properties).train()
+        clip_object_detection = ClipObjectDetection(self.global_properties, self.simulator_properties).test()
 
         self._started = True
 
