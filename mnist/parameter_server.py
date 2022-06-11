@@ -16,6 +16,9 @@ from torchvision import datasets, transforms
 ### below code has been taken from https://pytorch.org/tutorials/intermediate/rpc_param_server_tutorial.html
 ### and modified to work with pytorch 1.11 and SLURM
 
+### Please note that this code will run into a race condition, because workers will simultaniously access and optimize the shared parameters
+### To solve this problem this tutorial might help: https://pytorch.org/tutorials/intermediate/rpc_async_execution.html
+
 # --------- MNIST Network to train, from pytorch/examples -----
 class Net(nn.Module):
     def __init__(self, num_gpus=0):
@@ -25,13 +28,10 @@ class Net(nn.Module):
         device = torch.device(
             "cuda:0" if torch.cuda.is_available() and self.num_gpus > 0 else "cpu")
         print(f"Putting first 2 convs on {str(device)}")
-        # Put conv layers on the first cuda device, or CPU if no cuda device
         self.conv1 = nn.Conv2d(1, 32, 3, 1).to(device)
         self.conv2 = nn.Conv2d(32, 64, 3, 1).to(device)
-        # Put rest of the network on the 2nd cuda device, if there is one
         if "cuda" in str(device) and num_gpus > 1:
             device = torch.device("cuda:1")
-
         print(f"Putting rest of layers on {str(device)}")
         self.dropout1 = nn.Dropout(0.25).to(device)
         self.dropout2 = nn.Dropout(0.5).to(device)
@@ -46,7 +46,6 @@ class Net(nn.Module):
 
         x = self.dropout1(x)
         x = torch.flatten(x, 1)
-        # Move tensor to next device if necessary
         next_device = next(self.fc1.parameters()).device
         x = x.to(next_device)
 
@@ -64,56 +63,35 @@ class ParameterServer(nn.Module):
         super().__init__()
         model = Net(num_gpus=num_gpus)
         self.model = model
-        self.input_device = torch.device(
+        self.device = torch.device(
             "cuda:0" if torch.cuda.is_available() and num_gpus > 0 else "cpu")
 
     def forward(self, inp):
-        inp = inp.to(self.input_device)
+        inp = inp.to(self.device)
         out = self.model(inp)
-        # This output is forwarded over RPC, which as of 1.5.0 only accepts CPU tensors.
-        # Tensors must be moved in and out of GPU memory due to this.
         out = out.to("cpu")
         return out
 
-    # Use dist autograd to retrieve gradients accumulated for this model.
-    # Primarily used for verification.
-    def get_dist_gradients(self, cid):
-        grads = dist_autograd.get_gradients(cid)
-        # This output is forwarded over RPC, which as of 1.5.0 only accepts CPU tensors.
-        # Tensors must be moved in and out of GPU memory due to this.
+    def get_dist_gradients(self, context_id):
+        grads = dist_autograd.get_gradients(context_id)
         cpu_grads = {}
         for k, v in grads.items():
             k_cpu, v_cpu = k.to("cpu"), v.to("cpu")
             cpu_grads[k_cpu] = v_cpu
         return cpu_grads
 
-    # Wrap local parameters in a RRef. Needed for building the
-    # DistributedOptimizer which optimizes paramters remotely.
     def get_param_rrefs(self):
         param_rrefs = [rpc.RRef(param) for param in self.model.parameters()]
         return param_rrefs
 
-# The global parameter server instance.
+
 param_server = None
-# A lock to ensure we only have one parameter server.
 global_lock = Lock()
 
 # --------- Helper Methods --------------------
 
-# On the local node, call a method with first arg as the value held by the
-# RRef. Other args are passed in as arguments to the function called.
-# Useful for calling instance methods. method could be any matching function, including
-# class methods.
 def call_method(method, rref, *args, **kwargs):
     return method(rref.local_value(), *args, **kwargs)
-
-# Given an RRef, return the result of calling the passed in method on the value
-# held by the RRef. This call is done on the remote node that owns
-# the RRef and passes along the given argument.
-# Example: If the value held by the RRef is of type Foo, then
-# remote_method(Foo.bar, rref, arg1, arg2) is equivalent to calling
-# <foo_instance>.bar(arg1, arg2) on the remote node and getting the result
-# back.
 
 def remote_method(method, rref, *args, **kwargs):
     args = [method, rref] + list(args)
@@ -124,85 +102,55 @@ def get_parameter_server(num_gpus=0):
     Returns a singleton parameter server to all trainer processes
     """
     global param_server
-    # Ensure that we get only one handle to the ParameterServer.
     with global_lock:
         if not param_server:
-            # construct it once
             param_server = ParameterServer(num_gpus=num_gpus)
         return param_server
 
-def run_parameter_server(rank, world_size):
-    # The parameter server just acts as a host for the model and responds to
-    # requests from trainers.
-    # rpc.shutdown() will wait for all workers to complete by default, which
-    # in this case means that the parameter server will wait for all trainers
-    # to complete, and then exit.
-    print("PS master initializing RPC")
-    rpc.init_rpc(name="parameter_server", rank=rank, world_size=world_size)
-    print("RPC initialized! Running parameter server...")
-    rpc.shutdown()
-    print("RPC shutdown on parameter server.")
-
-
 # --------- Trainers --------------------
-
-# nn.Module corresponding to the network trained by this trainer. The
-# forward() method simply invokes the network on the given parameter
-# server.
 class TrainerNet(nn.Module):
     def __init__(self, num_gpus=0):
         super().__init__()
         self.num_gpus = num_gpus
-        self.param_server_rref = rpc.remote("parameter_server", get_parameter_server, args=(num_gpus,))     # args must be iterable, so ',' is needed!
+        self.param_server_rref = rpc.remote("parameter_server", get_parameter_server, args=[num_gpus])
 
     def get_global_param_rrefs(self):
-        remote_params = remote_method(ParameterServer.get_param_rrefs, self.param_server_rref)
-        return remote_params
+        return remote_method(ParameterServer.get_param_rrefs, self.param_server_rref)
 
     def forward(self, x):
-        model_output = remote_method(ParameterServer.forward, self.param_server_rref, x)
-        return model_output
+        return remote_method(ParameterServer.forward, self.param_server_rref, x)
 
 
 def run_training_loop(rank, num_gpus, train_loader, test_loader):
-    # Runs the typical nueral network forward + backward + optimizer step, but
-    # in a distributed fashion.
-    net = TrainerNet(num_gpus=num_gpus)
-    # Build DistributedOptimizer.
-    param_rrefs = net.get_global_param_rrefs()
+    model = TrainerNet(num_gpus=num_gpus)
+    param_rrefs = model.get_global_param_rrefs()
     opt = DistributedOptimizer(optim.SGD, param_rrefs, lr=0.03)
 
     for i, (data, target) in enumerate(train_loader):
-        with dist_autograd.context() as cid:
-            model_output = net(data)
-            target = target.to(model_output.device)
-            loss = F.nll_loss(model_output, target)
+        with dist_autograd.context() as context_id:
+            output = model(data)
+            target = target.to(output.device)
+            loss = F.nll_loss(output, target)
             if i % 5 == 0:
                 print(f"Rank {rank} training batch {i} loss {loss.item()}")
-            dist_autograd.backward(cid, [loss])
-            # Ensure that dist autograd ran successfully and gradients were
-            # returned.
-            assert remote_method(
-                ParameterServer.get_dist_gradients,
-                net.param_server_rref,
-                cid) != {}
-            opt.step(cid)
-
+            dist_autograd.backward(context_id, [loss])
+            # print(remote_method(ParameterServer.get_dist_gradients, model.param_server_rref, context_id))
+            opt.step(context_id)
+    
     print("Training complete!")
     print("Getting accuracy....")
-    get_accuracy(test_loader, net)
+    get_accuracy(test_loader, model)
 
 
 def get_accuracy(test_loader, model):
     model.eval()
     correct_sum = 0
-    # Use GPU to evaluate if possible
     device = torch.device("cuda:0" if model.num_gpus > 0
         and torch.cuda.is_available() else "cpu")
     with torch.no_grad():
         for i, (data, target) in enumerate(test_loader):
-            out = model(data)
-            pred = out.argmax(dim=1, keepdim=True)
+            output = model(data)
+            pred = output.argmax(dim=1, keepdim=True)
             pred, target = pred.to(device), target.to(device)
             correct = pred.eq(target.view_as(pred)).sum().item()
             correct_sum += correct
@@ -210,68 +158,49 @@ def get_accuracy(test_loader, model):
     print(f"Accuracy {correct_sum / len(test_loader.dataset)}")
 
 
-# Main loop for trainers.
-def run_worker(rank, world_size, num_gpus, train_loader, test_loader):
-    print(f"Worker rank {rank} initializing RPC")
-    rpc.init_rpc(name=f"trainer_{rank}", rank=rank, world_size=world_size)
-    print(f"Worker {rank} done initializing RPC")
-    run_training_loop(rank, num_gpus, train_loader, test_loader)
+def launch_rpc(rank, world_size, num_gpus, train_loader, test_loader):
+    
+    if rank == 0:
+        print("PS master initializing RPC")
+        rpc.init_rpc(name="parameter_server", rank=rank, world_size=world_size)
+        print("RPC initialized! Running parameter server...")
+    else:
+        print(f"Worker rank {rank} initializing RPC")
+        rpc.init_rpc(name=f"trainer_{rank}", rank=rank, world_size=world_size)
+        print(f"Worker {rank} done initializing RPC")
+        run_training_loop(rank, num_gpus, train_loader, test_loader)
+    
     rpc.shutdown()
 
 
 if __name__ == '__main__':
 
-    # get start time
     start = datetime.now()
-
-    # get user variables from environment and torch
     slurm_job_id = os.environ.get('SLURM_JOBID')                            # '2033407'         - job id
-    nodelist = os.environ.get('SLURM_NODELIST')                             # 'node[321-322]'   - list of nodes
-    master_addr = os.environ.get('MASTER_ADDR')                             # 'node321'         - master address
-    master_port = int(os.environ.get('MASTER_PORT'))                        # '23456'           - master port
-    world_size = int(os.environ.get('SLURM_NNODES'))                        # '2'               - world size (number of nodes)
-    rank = int(os.environ.get('SLURM_PROCID'))                              # '0' or '1'        - rank (process id)
-    num_cpus = int(os.environ.get('SLURM_CPUS_ON_NODE'))                    # '32'              - number of avaiable cpus on current node
-    num_gpus = torch.cuda.device_count()                                    # '2'               - number of available cuda devices
-
-    # print information
-    if rank == 0:
-        print("====================================================================")
-        print(f"Job ID: {slurm_job_id}")
-        print(f"Master Address: {master_addr}")
-        print(f"Master Port: {master_port}")
-        print(f"Nodes: {nodelist}")
-
-        print(f"Rank of Parameter Server: {rank}")
-        print(f"Number of CPUs of each Node: {num_cpus}")
-        print(f"Number of GPUs of each Node: {num_gpus}")
-
-        print(f"World Size: {world_size}")
-        print("====================================================================")
-
-    print(f"Rank of current Node: {rank}")
-    print(f"Number of threads on current Node: {torch.get_num_threads()}")
-
-    torch.multiprocessing.set_start_method('spawn')
-
-    num_gpus = 0                                                            # use only cpus
-
-    processes = []
-
-    if rank == 0:
-        p = mp.Process(target=run_parameter_server, args=(0, world_size))
-        p.start()
-        processes.append(p)
+    
+    if slurm_job_id:
+        nodelist = os.environ.get('SLURM_NODELIST')                         # 'node[321-322]'   - list of nodes
+        master_addr = os.environ.get('MASTER_ADDR')                         # 'node321'         - master address
+        master_port = int(os.environ.get('MASTER_PORT'))                    # '23456'           - master port
+        slurm_ntasks = int(os.getenv("SLURM_NTASKS"))                       # '4'               - number of tasks
+        slurm_procid = int(os.getenv("SLURM_PROCID"))                       # '0' or '1' ...    - id of current process
+        slurm_nnodes = int(os.environ.get('SLURM_NNODES'))                  # '2'               - number of nodes
+        num_cpus = int(os.environ.get('SLURM_CPUS_ON_NODE'))                # '32'              - number of avaiable cpus on current node
+        num_gpus = torch.cuda.device_count()                                # '2'               - number of available cuda devices
     else:
-        transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
-        train_loader = DataLoader(datasets.MNIST('{}/../data'.format(os.path.dirname(os.path.realpath(__file__))), train=True, download=True, transform=transform), batch_size=32, shuffle=True)
-        test_loader = DataLoader(datasets.MNIST('{}/../data'.format(os.path.dirname(os.path.realpath(__file__))), train=False, transform=transform), batch_size=32, shuffle=True)
-        p = mp.Process(target=run_worker, args=(rank, world_size, num_gpus, train_loader, test_loader))
-        p.start()
-        processes.append(p)
+        os.environ["MASTER_ADDR"] = 'localhost'
+        os.environ["MASTER_PORT"] = str(23456)
 
-    for p in processes:
-        p.join()
+    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+    train_loader = DataLoader(datasets.MNIST('{}/../data'.format(os.path.dirname(os.path.realpath(__file__))), train=True, download=True, transform=transform), batch_size=32, shuffle=True)
+    test_loader = DataLoader(datasets.MNIST('{}/../data'.format(os.path.dirname(os.path.realpath(__file__))), train=False, transform=transform), batch_size=32, shuffle=True)
+
+    if slurm_job_id:
+        launch_rpc(slurm_procid, slurm_ntasks, num_gpus, train_loader, test_loader)
+    else:
+        nprocs = torch.get_num_threads()
+        num_gpus = torch.cuda.device_count()
+        mp.spawn(launch_rpc, args=(nprocs, num_gpus, train_loader, test_loader), nprocs=nprocs, join=True)
 
     end = datetime.now()
     print('Time: ', end - start)
