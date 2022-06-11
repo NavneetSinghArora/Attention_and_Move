@@ -38,7 +38,9 @@ class FurnLiftBaseConfig(ExperimentConfig, ABC):
     # Training config
     max_ep_using_expert_actions = 10000
     dagger_mode = True
-    train_scenes = CONSTANTS.TRAIN_SCENE_NAMES[20:40]
+    train_scenes_all = CONSTANTS.TRAIN_SCENE_NAMES[20:40]   # TODO: create human readable way of choosing scenes!
+    remove_scenes = ['FloorPlan201_physics', 'FloorPlan203_physics', 'FloorPlan209_physics', 'FloorPlan210_physics', 'FloorPlan214_physics', 'FloorPlan216_physics', 'FloorPlan218_physics']    # removing scenes that cause trouble
+    train_scenes = list(set(train_scenes_all) - set(remove_scenes))
     valid_scenes = CONSTANTS.VALID_SCENE_NAMES[5:10]
     use_a3c_loss_when_not_expert_forcing = True
 
