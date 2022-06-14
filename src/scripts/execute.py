@@ -100,6 +100,10 @@ def cli3(**kwargs):
 @click.option('-s', '--start', is_flag=True, help='Start training')
 @click.option('-g', '--gpu', help='Give GPU options as 0 or 1')
 @click.option('-f', '--frozen', is_flag=True, help='Layers to be frozen or not')
+@click.option('-c', '--checkpoint', help='Training on top of a checkpoint')
+@click.option('-o', '--optimiser', help='Training with specific optimiser')
+@click.option('-l', '--learningrate', help='Choose specific learning rate')
+@click.option('-e', '--epochs', help='Choose specific learning rate')
 def start_local_training(**kwargs):
     _init(**kwargs)
 
@@ -128,6 +132,26 @@ def start_local_training(**kwargs):
     else:
         print("Layers Frozen = False")
         global_properties['frozen'] = False
+
+    if kwargs['checkpoint']:
+        global_properties['checkpoint'] = kwargs['checkpoint']
+    else:
+        global_properties['checkpoint'] = None
+
+    if kwargs['optimiser']:
+        global_properties['optimiser'] = kwargs['optimiser']
+    else:
+        global_properties['optimiser'] = 'SGD'
+
+    if kwargs['learningrate']:
+        global_properties['learningrate'] = kwargs['learningrate']
+    else:
+        global_properties['learningrate'] = 0.01
+
+    if kwargs['epochs']:
+        global_properties['epochs'] = kwargs['epochs']
+    else:
+        global_properties['epochs'] = 20
 
     environment = initialise_environment(global_properties, simulator_properties)
     print('Simulator Environment Initialized')

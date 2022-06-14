@@ -87,7 +87,7 @@ class Environment:
         print('Agent Positions Randomized')
 
         target_object = self.simulator_properties['target_object']
-        clip_object_detection = ClipObjectDetection(self.global_properties, self.simulator_properties).test()
+        clip_object_detection = ClipObjectDetection(self.global_properties, self.simulator_properties).run()
 
         self._started = True
 
