@@ -190,7 +190,8 @@ class ClipObjectDetection:
         testing_dataset = SimulatorDataset(testing_df, self.preprocess, 'testing')
         testing_dataloader = DataLoader(testing_dataset, batch_size=self.batch_size, shuffle=True)
 
-        return training_dataloader, validation_dataloader, testing_dataloader
+        # return training_dataloader, validation_dataloader, testing_dataloader
+        return testing_dataloader
 
     def train(self, training_dataloader, epoch):
         if self.global_properties['checkpoint'] is not None:
@@ -321,6 +322,11 @@ class ClipObjectDetection:
         mean_recall = 100
         mean_precision = 100
         f1_score = 100
+
+        images, labels, texts = next(iter(testing_dataloader))
+        grid = torchvision.utils.make_grid(images)
+        tb.add_image("Testing Images", grid)
+
         # training_dataloader, validation_dataloader, testing_dataloader = self.get_dataloader()
 
         with tqdm(total=len(testing_dataloader) - 1) as bar:
@@ -348,6 +354,12 @@ class ClipObjectDetection:
             print(f'Precision: {round(mean_precision, 2)}%')
             print(f'Recall: {round(mean_recall, 2)}%')
             print(f'F1-Score: {round(f1_score, 2)}%')
+
+            tb.add_scalar("Testing Accuracy", mean_accuracy)
+            tb.add_scalar("Testing Precision", mean_precision)
+            tb.add_scalar("Testing Recall", mean_recall)
+            tb.add_scalar("Testing F1-Score", f1_score)
+            tb.close()
 
 
     def save_best_checkpoint(self, epoch, validation_loss):
@@ -384,6 +396,7 @@ class ClipObjectDetection:
     def run(self):
         print('Starting the run')
         training_dataloader, validation_dataloader, testing_dataloader = self.get_dataloader()
+        # testing_dataloader = self.get_dataloader()
         if self.global_properties['optimiser'] is not None:
             self.optimiser = self.get_optimiser(self.global_properties['optimiser'])
         if self.global_properties['learningrate'] is not None:

@@ -149,7 +149,7 @@ def start_local_training(**kwargs):
         global_properties['learningrate'] = 0.01
 
     if kwargs['epochs']:
-        global_properties['epochs'] = kwargs['epochs']
+        global_properties['epochs'] = int(kwargs['epochs'])
     else:
         global_properties['epochs'] = 20
 
