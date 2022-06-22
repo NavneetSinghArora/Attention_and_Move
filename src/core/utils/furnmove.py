@@ -465,7 +465,7 @@ def save_agents_path_without_frame_png(
 
 
 def save_agents_path_png(
-    agent: MultiAgent, k=0, start_resolution: int = 84, save_resolution: int = 1000,
+    agent: MultiAgent, k=0, start_resolution: int = 300, save_resolution: int = 1000,
 ):
     agent.environment.step(
         {

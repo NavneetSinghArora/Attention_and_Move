@@ -68,7 +68,7 @@ class Model(nn.Module):
 
         self.coordinate_actions = coordinate_actions
 
-        # input to conv is (num_agents, self.num_inputs_per_agent, 84, 84)
+        # input to conv is (num_agents, self.num_inputs_per_agent, 300, 300)
         self.cnn = nn.Sequential(
             OrderedDict(
                 [
@@ -217,7 +217,7 @@ class Model(nn.Module):
         hidden: Optional[torch.FloatTensor],
         agent_rotations: Sequence[int],
     ):
-        if inputs.shape != (self.num_agents, self.num_inputs_per_agent, 84, 84):
+        if inputs.shape != (self.num_agents, self.num_inputs_per_agent, 300, 300):
             raise Exception("input to model is not as expected, check!")
 
         x = self.cnn(inputs)

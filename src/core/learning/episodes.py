@@ -131,7 +131,7 @@ class FurnLiftEpisode(JointNavigationEpisode):
 
     @classmethod
     def class_available_action_groups(cls, **kwargs) -> Tuple[Tuple[str, ...], ...]:
-        actions = ("MoveAhead", "RotateLeft", "RotateRight", "Pass", "Pickup")
+        actions = ("MoveAhead", "RotateLeft", "RotateRight", "Done", "PickupObject")
         return (actions,)
 
     def info(self):
@@ -144,7 +144,7 @@ class FurnLiftEpisode(JointNavigationEpisode):
 
     def multi_step(self, actions_as_ints: Tuple[int, ...]) -> List[Dict[str, Any]]:
         assert not self.is_paused() and not self.is_complete()
-        pickup_index = self.available_actions.index("Pickup")
+        pickup_index = self.available_actions.index("PickupObject")
         visibility = self.goal_visibility()
         visible_to_all = all(visibility)
         agent_tried_pickup = [i == pickup_index for i in actions_as_ints]
@@ -186,10 +186,10 @@ class FurnLiftEpisode(JointNavigationEpisode):
 
     def _step(self, action_as_int: int, agent_id: int) -> Dict[str, Any]:
         action = self.available_actions[action_as_int]
-        if action == "Pickup":
+        if action == "PickupObject":
             self._picked_but_not_jointly_visible += 1
             metadata = self.environment.last_event.events[agent_id].metadata
-            metadata["lastAction"] = "Pickup"
+            metadata["lastAction"] = "PickupObject"
             metadata["lastActionSuccess"] = False
         else:
             action_dict = {"action": action, "agentId": agent_id}
@@ -206,7 +206,7 @@ class FurnLiftEpisode(JointNavigationEpisode):
         is_goal_visible = self.goal_visibility()
         if all(is_goal_visible):
             return tuple(
-                [self.available_actions.index("Pickup")] * self.environment.num_agents
+                [self.available_actions.index("PickupObject")] * self.environment.num_agents
             )
 
         for agent_id in range(self.environment.num_agents):
@@ -214,7 +214,7 @@ class FurnLiftEpisode(JointNavigationEpisode):
                 self.environment.last_event.events[agent_id].metadata["agent"]
             )
             if is_goal_visible[agent_id] or source_key in self.target_keys_set:
-                action = "Pass"
+                action = "Done"
             else:
                 action = self.environment.shortest_path_next_action(
                     source_key, self._closest_target(source_key)
@@ -316,7 +316,7 @@ class FurnLiftNApartStateEpisode(FurnLiftEpisode):
 
     def multi_step(self, actions_as_ints: Tuple[int, ...]) -> List[Dict[str, Any]]:
         assert not self.is_paused() and not self.is_complete()
-        pickup_index = self.available_actions.index("Pickup")
+        pickup_index = self.available_actions.index("PickupObject")
         visibility = self.goal_visibility()
         visible_to_all = all(visibility)
         agent_tried_pickup = [i == pickup_index for i in actions_as_ints]
@@ -384,10 +384,10 @@ class FurnLiftNApartStateEpisode(FurnLiftEpisode):
         reward = STEP_PENALITY
 
         action = self.available_actions[action_as_int]
-        if action == "Pickup":
+        if action == "PickupObject":
             self._picked_but_not_jointly_visible += 1
             metadata = self.environment.last_event.events[agent_id].metadata
-            metadata["lastAction"] = "Pickup"
+            metadata["lastAction"] = "PickupObject"
             metadata["lastActionSuccess"] = False
             reward += -0.1
         else:
@@ -437,7 +437,7 @@ class FurnLiftNApartStateEpisode(FurnLiftEpisode):
 
         if visible_to_all and all_sufficiently_far:
             return tuple(
-                [self.available_actions.index("Pickup")] * self.environment.num_agents
+                [self.available_actions.index("PickupObject")] * self.environment.num_agents
             )
 
         if len(self.target_key_groups) == 0:

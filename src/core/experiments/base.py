@@ -13,7 +13,7 @@ from src.core.learning.samplers import FurnLiftEpisodeSamplers
 class FurnLiftBaseConfig(ExperimentConfig, ABC):
     # Env/episode config
     num_agents = 2
-    screen_size = 84                                    # screen size for model!
+    screen_size = 300                                    # screen size for model!
     episode_class = FurnLiftNApartStateEpisode
     episode_sampler_class = FurnLiftEpisodeSamplers
     min_dist_between_agents_to_pickup = None

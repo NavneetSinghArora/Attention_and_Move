@@ -241,7 +241,7 @@ class MultiAgent(RLAgent):
             raise Exception(
                 "Overriding action and dagger flags, both set to true, check!"
             )
-        if not self.model.training and train:
+        if self.model.training and train:
             self.model.train()
         if self.model.training and not train:
             self.model.eval()

@@ -90,7 +90,7 @@ class AI2ThorEnvironment(object):
         move_mag: float = 0.25,
         player_screen_width=300,
         player_screen_height=300,
-        quality="Very Low",
+        quality="Medium",
     ) -> None:
 
         if self.platform == CloudRendering and (player_screen_height != 300 or player_screen_height != 300):
