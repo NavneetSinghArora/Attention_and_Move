@@ -12,11 +12,11 @@ mpl.use("Agg", force=False)
 
 class JointNavigationEpisode(MultiAgentAI2ThorEpisode):
     def __init__(
-        self,
-        env: AI2ThorEnvironmentWithGraph,
-        task_data: Dict[str, Any],
-        max_steps: int,
-        **kwargs
+            self,
+            env: AI2ThorEnvironmentWithGraph,
+            task_data: Dict[str, Any],
+            max_steps: int,
+            **kwargs
     ):
         super(JointNavigationEpisode, self).__init__(
             env=env, task_data=task_data, max_steps=max_steps, **kwargs
@@ -29,7 +29,7 @@ class JointNavigationEpisode(MultiAgentAI2ThorEpisode):
 
     @classmethod
     def class_available_action_groups(cls, **kwargs) -> Tuple[Tuple[str, ...], ...]:
-        actions = ("MoveAhead", "RotateLeft", "RotateRight", "Pass")
+        actions = ("MoveAhead", "RotateLeft", "RotateRight", "Done")
         return (actions,)
 
     def _is_goal_object_visible(self, agent_id: int) -> bool:
@@ -91,7 +91,7 @@ class JointNavigationEpisode(MultiAgentAI2ThorEpisode):
                 self.environment.last_event.events[agent_id].metadata["agent"]
             )
             if is_goal_visible[agent_id] or source_key in self.target_keys_set:
-                action = "Pass"
+                action = "Done"
             else:
                 action = self.environment.shortest_path_next_action(
                     source_key, self._closest_target(source_key)
@@ -118,11 +118,11 @@ class JointNavigationEpisode(MultiAgentAI2ThorEpisode):
 
 class FurnLiftEpisode(JointNavigationEpisode):
     def __init__(
-        self,
-        env: AI2ThorEnvironmentWithGraph,
-        task_data: Dict[str, Any],
-        max_steps: int,
-        **kwargs
+            self,
+            env: AI2ThorEnvironmentWithGraph,
+            task_data: Dict[str, Any],
+            max_steps: int,
+            **kwargs
     ):
         super().__init__(env=env, task_data=task_data, max_steps=max_steps, **kwargs)
         self._item_successfully_picked_up = False
@@ -131,7 +131,7 @@ class FurnLiftEpisode(JointNavigationEpisode):
 
     @classmethod
     def class_available_action_groups(cls, **kwargs) -> Tuple[Tuple[str, ...], ...]:
-        actions = ("MoveAhead", "RotateLeft", "RotateRight", "Pass", "Pickup")
+        actions = ("MoveAhead", "RotateLeft", "RotateRight", "Done", "PickupObject")
         return (actions,)
 
     def info(self):
@@ -144,7 +144,7 @@ class FurnLiftEpisode(JointNavigationEpisode):
 
     def multi_step(self, actions_as_ints: Tuple[int, ...]) -> List[Dict[str, Any]]:
         assert not self.is_paused() and not self.is_complete()
-        pickup_index = self.available_actions.index("Pickup")
+        pickup_index = self.available_actions.index("PickupObject")
         visibility = self.goal_visibility()
         visible_to_all = all(visibility)
         agent_tried_pickup = [i == pickup_index for i in actions_as_ints]
@@ -186,10 +186,10 @@ class FurnLiftEpisode(JointNavigationEpisode):
 
     def _step(self, action_as_int: int, agent_id: int) -> Dict[str, Any]:
         action = self.available_actions[action_as_int]
-        if action == "Pickup":
+        if action == "PickupObject":
             self._picked_but_not_jointly_visible += 1
             metadata = self.environment.last_event.events[agent_id].metadata
-            metadata["lastAction"] = "Pickup"
+            metadata["lastAction"] = "PickupObject"
             metadata["lastActionSuccess"] = False
         else:
             action_dict = {"action": action, "agentId": agent_id}
@@ -206,7 +206,7 @@ class FurnLiftEpisode(JointNavigationEpisode):
         is_goal_visible = self.goal_visibility()
         if all(is_goal_visible):
             return tuple(
-                [self.available_actions.index("Pickup")] * self.environment.num_agents
+                [self.available_actions.index("PickupObject")] * self.environment.num_agents
             )
 
         for agent_id in range(self.environment.num_agents):
@@ -214,7 +214,7 @@ class FurnLiftEpisode(JointNavigationEpisode):
                 self.environment.last_event.events[agent_id].metadata["agent"]
             )
             if is_goal_visible[agent_id] or source_key in self.target_keys_set:
-                action = "Pass"
+                action = "Done"
             else:
                 action = self.environment.shortest_path_next_action(
                     source_key, self._closest_target(source_key)
@@ -228,11 +228,11 @@ class FurnLiftEpisode(JointNavigationEpisode):
 
 class FurnLiftNApartStateEpisode(FurnLiftEpisode):
     def __init__(
-        self,
-        env: AI2ThorEnvironmentWithGraph,
-        task_data: Dict[str, Any],
-        max_steps: int,
-        **kwargs
+            self,
+            env: AI2ThorEnvironmentWithGraph,
+            task_data: Dict[str, Any],
+            max_steps: int,
+            **kwargs
     ):
         super().__init__(env=env, task_data=task_data, max_steps=max_steps, **kwargs)
         self._min_dist_between_agents_to_pickup = kwargs[
@@ -279,8 +279,8 @@ class FurnLiftNApartStateEpisode(FurnLiftEpisode):
             for ag_loc in self._initial_agent_locations
         ]
         mean_initial_agent_manhattan_steps_from_target = (
-            sum(_init_l1_dist) / len(_init_l1_dist)
-        ) / self.environment.grid_size
+                                                                 sum(_init_l1_dist) / len(_init_l1_dist)
+                                                         ) / self.environment.grid_size
 
         return {
             **super(JointNavigationEpisode, self).info(),
@@ -293,16 +293,16 @@ class FurnLiftNApartStateEpisode(FurnLiftEpisode):
             "initial_manhattan_steps": mean_initial_agent_manhattan_steps_from_target,
             "final_manhattan_distance_from_target": mean_final_agent_l1_distance_from_target,
             "spl_manhattan": int(self._item_successfully_picked_up)
-            * (
-                (mean_initial_agent_manhattan_steps_from_target + 0.0001)
-                / (
-                    max(
-                        mean_initial_agent_manhattan_steps_from_target,
-                        (self.num_steps_taken_in_episode() / nagents),
-                    )
-                    + 0.0001
-                )
-            ),
+                             * (
+                                     (mean_initial_agent_manhattan_steps_from_target + 0.0001)
+                                     / (
+                                             max(
+                                                 mean_initial_agent_manhattan_steps_from_target,
+                                                 (self.num_steps_taken_in_episode() / nagents),
+                                             )
+                                             + 0.0001
+                                     )
+                             ),
         }
 
     def manhattan_dists_between_agents(self):
@@ -316,7 +316,7 @@ class FurnLiftNApartStateEpisode(FurnLiftEpisode):
 
     def multi_step(self, actions_as_ints: Tuple[int, ...]) -> List[Dict[str, Any]]:
         assert not self.is_paused() and not self.is_complete()
-        pickup_index = self.available_actions.index("Pickup")
+        pickup_index = self.available_actions.index("PickupObject")
         visibility = self.goal_visibility()
         visible_to_all = all(visibility)
         agent_tried_pickup = [i == pickup_index for i in actions_as_ints]
@@ -329,7 +329,7 @@ class FurnLiftNApartStateEpisode(FurnLiftEpisode):
         all_sufficiently_far = all(sufficiently_far)
 
         self._pickupable_but_not_picked += (
-            visible_to_all * all_sufficiently_far * (not all_pick_up)
+                visible_to_all * all_sufficiently_far * (not all_pick_up)
         )
 
         if visible_to_all and all_sufficiently_far and all_pick_up:
@@ -367,10 +367,10 @@ class FurnLiftNApartStateEpisode(FurnLiftEpisode):
                 step_results[-1]["pickup_action_taken"] = agent_tried_pickup[i]
                 self._picked_but_not_pickupable += agent_tried_pickup[i]
                 self._picked_but_not_pickupable_distance += (
-                    agent_tried_pickup[i] and not all_sufficiently_far
+                        agent_tried_pickup[i] and not all_sufficiently_far
                 )
                 self._picked_but_not_pickupable_visibility += (
-                    agent_tried_pickup[i] and not visible_to_all
+                        agent_tried_pickup[i] and not visible_to_all
                 )
                 step_results[-1]["mutually_distant"] = sufficiently_far[i]
 
@@ -384,10 +384,10 @@ class FurnLiftNApartStateEpisode(FurnLiftEpisode):
         reward = STEP_PENALITY
 
         action = self.available_actions[action_as_int]
-        if action == "Pickup":
+        if action == "PickupObject":
             self._picked_but_not_jointly_visible += 1
             metadata = self.environment.last_event.events[agent_id].metadata
-            metadata["lastAction"] = "Pickup"
+            metadata["lastAction"] = "PickupObject"
             metadata["lastActionSuccess"] = False
             reward += -0.1
         else:
@@ -431,13 +431,13 @@ class FurnLiftNApartStateEpisode(FurnLiftEpisode):
         if all(k in self.target_keys_set for k in agent_keys):
             agent_key_tuple = tuple(sorted(agent_keys))
             if agent_key_tuple in self.target_key_groups and (
-                not visible_to_all or not all_sufficiently_far
+                    not visible_to_all or not all_sufficiently_far
             ):
                 self.target_key_groups.remove(agent_key_tuple)
 
         if visible_to_all and all_sufficiently_far:
             return tuple(
-                [self.available_actions.index("Pickup")] * self.environment.num_agents
+                [self.available_actions.index("PickupObject")] * self.environment.num_agents
             )
 
         if len(self.target_key_groups) == 0:
@@ -457,7 +457,7 @@ class FurnLiftNApartStateEpisode(FurnLiftEpisode):
         best_path_length = None
         for good_target_group in self.target_key_groups:
             for ordered_target_group in itertools.permutations(
-                good_target_group, len(good_target_group)
+                    good_target_group, len(good_target_group)
             ):
                 path_length = sum(
                     agent_to_dist_to_target(agent_id, target_key)
@@ -470,7 +470,7 @@ class FurnLiftNApartStateEpisode(FurnLiftEpisode):
         for agent_id in range(self.environment.num_agents):
             target_key = best_ordered_target_group[agent_id]
             if agent_keys[agent_id] == target_key:
-                action = "Pass"
+                action = "Done"
             else:
                 action = self.environment.shortest_path_next_action(
                     agent_keys[agent_id], target_key

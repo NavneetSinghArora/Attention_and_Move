@@ -70,6 +70,7 @@ def train(
                     agent=agent, episode_init_queue=episode_init_queue
                 )
                 try:
+                    # Once both agents reached TV for particular scene - go to the next scene
                     next(agent_iterator)
                     break
                 except StopIteration as e:
@@ -131,6 +132,7 @@ def train(
             }
 
             try:
+                # Once both agents reached TV - go to the next scene
                 next(agent_iterator)
                 raise Exception("Agent iterator should only yield once.")
             except StopIteration as _:
