@@ -264,7 +264,36 @@ class FurnLiftEpisodeSamplers(object):
             failure_reasons = []
             for _ in range(10):
 
-                # action "DisableAllObjectsOfType" has been removed, because it removes Television from scene
+                # FIXME: HERE IS WHERE THINGS SUPPOSELY GO TERRIBLY WRONG!
+
+                # HOWTO: start by activating the environment for aam
+                #        export PYTHONPATH=$PWD in the root folder of project
+                #        python rl_multi_agent/main.py --task furnlift_vision_mixture_cl_config --experiment_dir rl_multi_agent/experiments --platform=Linux64 --gpu_ids 0 --amsgrad t --workers 2 --num_steps 50 --save_freq 2000 --max_ep 100000
+                # remove --platform argument if you want to use CloudRendering!
+
+                # CHANGE: DisableAllObjectsOfType does not seem to disable any Televisions at all
+                # env.step(
+                #     {
+                #         "action": "DisableAllObjectsOfType",
+                #         "objectId": self.object_type,
+                #         "agentId": 0,
+                #     }
+                # )
+
+                # CHANGE: instead get Television and disable by using action "DisableObject"
+                objects_of_type = env.all_objects_with_properties(
+                    {"objectType": self.object_type}, agent_id=0
+                )
+                if len(objects_of_type) != 1:
+                    print("len(objects_of_type): {}".format(len(objects_of_type)))
+                    raise (Exception("len(objects_of_type) != 1"))
+                env.step(
+                    {
+                        "action": "DisableObject",
+                        "objectId": objects_of_type[0]["objectId"],
+                        "agentId": 0,
+                    }
+                )
 
                 for agent_id in range(self.num_agents):
                     env.randomize_agent_location(
@@ -276,22 +305,25 @@ class FurnLiftEpisodeSamplers(object):
                         only_initially_reachable=True,
                     )
 
-                # action "RandomlyCreateAndPlaceObjectOnFloor" has been removed, because it does not create a new Television anymore
-                # randomly place objects in scene instead
-
                 env.step(
                     {
-                        "action": "InitialRandomSpawn",
-                        "randomSeed": random.randint(0, int(1e9)),  # samples a new seed
-                        "forceVisible": False,
-                        "numPlacementAttempts": 50,
-                        "placeStationary": True,
-                        "numDuplicatesOfType": [],
-                        "excludedReceptacles": [],
-                        "excludedObjectIds": []
+                        "action": "RandomlyCreateAndPlaceObjectOnFloor",
+                        "objectType": self.object_type,
+                        "agentId": 0,
                     }
                 )
-                
+                if (
+                    env.last_event.metadata["lastAction"]
+                    != "RandomlyCreateAndPlaceObjectOnFloor"
+                    or not env.last_event.metadata["lastActionSuccess"]
+                ):
+                    failure_reasons.append(
+                        "Could not randomize location of {}.".format(
+                            self.object_type, scene
+                        )
+                    )
+                    continue
+
                 env.refresh_initially_reachable()
 
                 objects_of_type = env.all_objects_with_properties(
@@ -303,13 +335,13 @@ class FurnLiftEpisodeSamplers(object):
 
                 object = objects_of_type[0]
                 object_id = object["objectId"]
-                obj_rot = round(object["rotation"]["y"])
+
+                obj_rot = round(object["rotation"]["y"])    # CHANGE: needs round, to return 90° instead of 89°!
                 object_points_set = set(
                     (
                         round(object["position"]["x"] + t[0], 2),
                         round(object["position"]["z"] + t[1], 2),
                     )
-                    # TELEVISION_ROTATION_TO_OCCUPATIONS has been altered to support 45° rotations
                     for t in CONSTANTS.TELEVISION_ROTATION_TO_OCCUPATIONS[obj_rot]
                 )
 
@@ -375,18 +407,44 @@ class FurnLiftEpisodeSamplers(object):
                             )
                     
                     if len(good_cliques) == 0:
-                        # TODO: This failure is only thrown in FloorPlanN_physics, with N = {203, 209, 210, 214, 216}. Remove these scenes from pool or find solution!
-                        failure_reasons.append(f" Failed to find a tuple of {env.num_agents} targets all {self.min_dist_between_agents_to_pickup} steps apart.")
+                        failure_reasons.append(
+                            "Failed to find a tuple of {} targets all {} steps apart.".format(
+                                env.num_agents, self.min_dist_between_agents_to_pickup
+                            )
+                        )
                         continue
 
                     good_cliques = [
                         [possible_targets[i] for i in gc] for gc in good_cliques
                     ]
+                else:
+                    assert False, "Old code."
+                    (
+                        min_considered,
+                        max_considered,
+                    ) = self.min_max_visible_positions_to_consider
+                    offset0 = min(
+                        max(len(possible_targets) - min_considered, 0),
+                        self.max_visible_positions_push,
+                    )
+                    # offset1 = min(
+                    #     max(len(possible_targets) - max_considered, 0),
+                    #     self.max_visible_positions_push,
+                    # )
+                    min_slice = slice(offset0, offset0 + min_considered)
+                    # max_slice = slice(offset1, offset1 + max_considered)
+
+                    possible_targets = possible_targets[min_slice]
+
+                    good_cliques = list(
+                        itertools.combinations(possible_targets, self.num_agents)
+                    )
 
                 if len(possible_targets) < env.num_agents:
-                    failure_reasons.append(" The number of positions from which the object was visible was less than the number of agents.")
+                    failure_reasons.append(
+                        "The number of positions from which the object was visible was less than the number of agents."
+                    )
                     continue
-
                 scene_successfully_setup = True
                 break
 
@@ -394,7 +452,7 @@ class FurnLiftEpisodeSamplers(object):
             warnings.warn(
                 (
                     "Failed to randomly initialize objects and agents in scene {} 10 times"
-                    + " for the following reasons:"
+                    + "for the following reasons:"
                     + "\n\t* ".join(failure_reasons)
                     + "\nTrying a new scene."
                 ).format(env.scene_name)

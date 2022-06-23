@@ -26,7 +26,7 @@ class CoordType(Enum):
 
 ACTION_TO_COORD_TYPE = frozendict.frozendict(
     {
-        "Pass": CoordType.INDIVIDUAL,
+        "Done": CoordType.INDIVIDUAL,
         #
         **{
             "Move{}".format(dir): CoordType.INDIVIDUAL
@@ -58,7 +58,7 @@ ACTION_TO_COORD_TYPE = frozendict.frozendict(
             "MoveAgents{}WithObject".format(dir): CoordType.MOVE_WITH_LIFTED_EGO
             for dir in CONSTANTS.EGO_DIR_STRS
         },
-        "Pickup": CoordType.PICKUP,
+        "PickupObject": CoordType.PICKUP,
     }
 )
 

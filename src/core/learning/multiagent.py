@@ -20,22 +20,22 @@ from src.core.utils.misc import (
 
 class MultiAgent(RLAgent):
     def __init__(
-        self,
-        model: Optional[nn.Module] = None,
-        model_expert: Optional[nn.Module] = None,
-        episode: Optional[Episode[EnvType]] = None,
-        expert_class_available_actions: Optional[Sequence[str]] = None,
-        gpu_id: int = -1,
-        include_test_eval_results: bool = False,
-        record_all_in_test: bool = False,
-        include_depth_frame: bool = False,
-        huber_delta: Optional[float] = None,
-        discourage_failed_coordination: Union[bool, int, float] = False,
-        use_smooth_ce_loss_for_expert: bool = False,
-        resize_image_as: Optional[int] = None,
-        dagger_mode: Optional[bool] = None,
-        coordination_use_marginal_entropy: bool = False,
-        **kwargs,
+            self,
+            model: Optional[nn.Module] = None,
+            model_expert: Optional[nn.Module] = None,
+            episode: Optional[Episode[EnvType]] = None,
+            expert_class_available_actions: Optional[Sequence[str]] = None,
+            gpu_id: int = -1,
+            include_test_eval_results: bool = False,
+            record_all_in_test: bool = False,
+            include_depth_frame: bool = False,
+            huber_delta: Optional[float] = None,
+            discourage_failed_coordination: Union[bool, int, float] = False,
+            use_smooth_ce_loss_for_expert: bool = False,
+            resize_image_as: Optional[int] = None,
+            dagger_mode: Optional[bool] = None,
+            coordination_use_marginal_entropy: bool = False,
+            **kwargs,
     ) -> None:
         super().__init__(model=model, episode=episode, gpu_id=gpu_id, **kwargs)
 
@@ -108,10 +108,10 @@ class MultiAgent(RLAgent):
         self._model_expert.eval()
 
     def eval_at_state(
-        self,
-        state: Dict[str, Union[Tuple, torch.FloatTensor, torch.cuda.FloatTensor]],
-        hidden: Optional[Tuple[Tuple[torch.FloatTensor, ...]]],
-        **kwargs,
+            self,
+            state: Dict[str, Union[Tuple, torch.FloatTensor, torch.cuda.FloatTensor]],
+            hidden: Optional[Tuple[Tuple[torch.FloatTensor, ...]]],
+            **kwargs,
     ) -> Dict[str, Union[torch.FloatTensor, Tuple[torch.FloatTensor, ...]]]:
         assert type(state) == dict
 
@@ -130,10 +130,10 @@ class MultiAgent(RLAgent):
         )
 
     def eval_at_state_expert(
-        self,
-        state: Dict[str, Union[Tuple, torch.FloatTensor, torch.cuda.FloatTensor]],
-        hidden: Optional[Tuple[Tuple[torch.FloatTensor, ...]]],
-        **kwargs,
+            self,
+            state: Dict[str, Union[Tuple, torch.FloatTensor, torch.cuda.FloatTensor]],
+            hidden: Optional[Tuple[Tuple[torch.FloatTensor, ...]]],
+            **kwargs,
     ) -> Dict[str, Union[torch.FloatTensor, Tuple[torch.FloatTensor, ...]]]:
         assert type(state) == dict
 
@@ -161,8 +161,8 @@ class MultiAgent(RLAgent):
 
         if self.include_depth_frame:
             assert (
-                self.resize_image_as is not None
-                and states_for_agents[0]["frame"].shape[-1] == 3
+                    self.resize_image_as is not None
+                    and states_for_agents[0]["frame"].shape[-1] == 3
             )
             frames = tuple(
                 torch.cat(
@@ -207,21 +207,21 @@ class MultiAgent(RLAgent):
                 torch.FloatTensor(
                     states_for_agents[0]["would_coordinated_action_succeed"]
                 )
-                .view(1, -1)
-                .repeat(self.environment.num_agents, 1)
+                    .view(1, -1)
+                    .repeat(self.environment.num_agents, 1)
             )
 
         return state
 
     @property
     def state(
-        self,
+            self,
     ) -> Dict[str, Union[Tuple, torch.FloatTensor, torch.cuda.FloatTensor]]:
         return self._get_state(expert=False)
 
     @property
     def state_expert(
-        self,
+            self,
     ) -> Dict[str, Union[Tuple, torch.FloatTensor, torch.cuda.FloatTensor]]:
         return self._get_state(expert=True)
 
@@ -231,10 +231,10 @@ class MultiAgent(RLAgent):
         return {"expert_actions": self.episode.next_expert_action()}
 
     def act(
-        self,
-        train: bool = True,
-        overriding_actions: Optional[Tuple[int, ...]] = None,
-        **kwargs,
+            self,
+            train: bool = True,
+            overriding_actions: Optional[Tuple[int, ...]] = None,
+            **kwargs,
     ) -> Dict:
         if self.dagger_mode and overriding_actions:
             # Dagger mode and overriding actions
@@ -352,9 +352,9 @@ class MultiAgent(RLAgent):
         # If expert action needs to be taken or not
         if self.dagger_mode:
             take_expert_action = (
-                train
-                and self.take_expert_action_prob != 0
-                and random.random() < self.take_expert_action_prob
+                    train
+                    and self.take_expert_action_prob != 0
+                    and random.random() < self.take_expert_action_prob
             )
         else:
             take_expert_action = False
@@ -367,8 +367,8 @@ class MultiAgent(RLAgent):
                     self.entropy_per_agent.append(
                         tuple(
                             -(log_sum_exp(log_probs, 1) * probs.sum(1))
-                            .sum()
-                            .unsqueeze(0)
+                                .sum()
+                                .unsqueeze(0)
                             for log_probs, probs in zip(
                                 log_probs_per_agent, probs_per_agent
                             )
@@ -419,11 +419,11 @@ class MultiAgent(RLAgent):
             if coordinated_actions:
                 actions = tuple(
                     (
-                        probs[:, coordination_ind, :]
-                        / probs[:, coordination_ind, :].sum()
+                            probs[:, coordination_ind, :]
+                            / probs[:, coordination_ind, :].sum()
                     )
-                    .multinomial(num_samples=1)
-                    .item()
+                        .multinomial(num_samples=1)
+                        .item()
                     for probs in probs_per_agent
                 )
             else:
@@ -445,7 +445,7 @@ class MultiAgent(RLAgent):
 
         log_prob_of_expert_action_per_agent = None
         if self.expert_actions[-1] is not None and all(
-            x is not None for x in self.expert_actions[-1]
+                x is not None for x in self.expert_actions[-1]
         ):
             if self.use_smooth_ce_loss_for_expert:
                 raise NotImplementedError(
@@ -463,8 +463,8 @@ class MultiAgent(RLAgent):
                     ce = ce[expert_action]
                 assert ce.dim() == 0
                 log_prob_of_expert_action_per_agent = (
-                    ce / self.environment.num_agents,
-                ) * self.environment.num_agents
+                                                          ce / self.environment.num_agents,
+                                                      ) * self.environment.num_agents
             else:
                 # Multiagent navigation task update
                 if joint_logit_all:
@@ -567,7 +567,7 @@ class MultiAgent(RLAgent):
         divisor = 0
         numerator = 0
         for expert_actions, actions, log_probs in zip(
-            self.expert_actions, self.actions, self.log_prob_of_unsafe_action
+                self.expert_actions, self.actions, self.log_prob_of_unsafe_action
         ):
             unsafe_but_expert_safe = [
                 expert_action != self._unsafe_action_ind
@@ -609,14 +609,14 @@ class MultiAgent(RLAgent):
                 )
 
             loss -= 0.5 * (
-                (joint_log_probs * m_individual).sum() / (m_individual.sum())
-                + (joint_log_probs * m_coord).sum() / (m_coord.sum())
+                    (joint_log_probs * m_individual).sum() / (m_individual.sum())
+                    + (joint_log_probs * m_coord).sum() / (m_coord.sum())
             )
 
         loss_dict["failed_coordination"] = loss / len(self.eval_results)
 
     def loss(
-        self, train: bool = True, size_average: bool = True, **kwargs
+            self, train: bool = True, size_average: bool = True, **kwargs
     ) -> Union[Dict[str, torch.Tensor], None]:
         loss_dict = {}
 
@@ -633,11 +633,11 @@ class MultiAgent(RLAgent):
             self.safety_loss(loss_dict)
 
         if (
-            self._use_a3c_loss
-            and (not any(self.took_expert_action))
-            and all(r is not None for r in self.rewards_per_agent)
-            and all(e is not None for e in self.entropy_per_agent)
-            and all(v is not None for v in self.values_per_agent)
+                self._use_a3c_loss
+                and (not any(self.took_expert_action))
+                and all(r is not None for r in self.rewards_per_agent)
+                and all(e is not None for e in self.entropy_per_agent)
+                and all(v is not None for v in self.values_per_agent)
         ):
             policy_loss = 0.0
             value_loss = 0.0

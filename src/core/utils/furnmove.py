@@ -366,7 +366,7 @@ def save_agents_path_without_frame_png(
                     "MoveAgentsWestWithObject": 270,
                 }
                 agent_arrow["angle"].append(action_to_rot[action_string])
-            elif action_string == "Pass":
+            elif action_string == "Done":
                 continue
             plt.plot(
                 after_position_i["x"],
@@ -479,7 +479,7 @@ def save_agents_path_png(
     step_results = agent.step_results
 
     joint_position_mark_colors = []
-    pickup_index = agent.episode.available_actions.index("Pickup")
+    pickup_index = agent.episode.available_actions.index("PickupObject")
     for sr in step_results:
         all_picked = all(
             sr[i]["action"] == pickup_index for i in range(agent.environment.num_agents)
@@ -503,7 +503,7 @@ def save_agents_path_png(
         for j, sr in enumerate(step_results):
             if joint_position_mark_colors[j] is not None:
                 position_mark_colors.append(joint_position_mark_colors[j])
-            elif sr[i]["action"] == agent.episode.available_actions.index("Pickup"):
+            elif sr[i]["action"] == agent.episode.available_actions.index("PickupObject"):
                 position_mark_colors.append("black")
             else:
                 position_mark_colors.append(None)

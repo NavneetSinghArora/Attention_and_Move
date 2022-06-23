@@ -69,37 +69,39 @@ SMALL_TELEVISION_TEMPLATE_STRING = """
 
 STEP_PENALTY = -0.01
 
-TELEVISION_ROT_0_POINTS = ([(0.25 * i, 0.25) for i in [-1, 0, 1]] + [(0.25 * i, 0) for i in [-2, -1, 0, 1, 2]] + [(0.25 * i, -0.25) for i in [-2, -1, 0, 1, 2]])
-TELEVISION_ROT_45_POINTS = [rotate_tuple_90_clockwise(t) for t in TELEVISION_ROT_0_POINTS]
-TELEVISION_ROT_90_POINTS = [rotate_tuple_90_clockwise(t) for t in TELEVISION_ROT_0_POINTS]
-TELEVISION_ROT_135_POINTS = [rotate_tuple_90_clockwise(t) for t in TELEVISION_ROT_90_POINTS]
-TELEVISION_ROT_180_POINTS = [rotate_tuple_90_clockwise(t) for t in TELEVISION_ROT_90_POINTS]
-TELEVISION_ROT_225_POINTS = [rotate_tuple_90_clockwise(t) for t in TELEVISION_ROT_180_POINTS]
-TELEVISION_ROT_270_POINTS = [rotate_tuple_90_clockwise(t) for t in TELEVISION_ROT_180_POINTS]
-TELEVISION_ROT_315_POINTS = [rotate_tuple_90_clockwise(t) for t in TELEVISION_ROT_270_POINTS]
-TELEVISION_ROT_360_POINTS = [rotate_tuple_90_clockwise(t) for t in TELEVISION_ROT_270_POINTS]
-
+TELEVISION_ROT_0_POINTS = (
+    [(0.25 * i, 0.25) for i in [-1, 0, 1]]
+    + [(0.25 * i, 0) for i in [-2, -1, 0, 1, 2]]
+    + [(0.25 * i, -0.25) for i in [-2, -1, 0, 1, 2]]
+)
+TELEVISION_ROT_90_POINTS = [
+    rotate_tuple_90_clockwise(t) for t in TELEVISION_ROT_0_POINTS
+]
+TELEVISION_ROT_180_POINTS = [
+    rotate_tuple_90_clockwise(t) for t in TELEVISION_ROT_90_POINTS
+]
+TELEVISION_ROT_270_POINTS = [
+    rotate_tuple_90_clockwise(t) for t in TELEVISION_ROT_180_POINTS
+]
 TELEVISION_ROTATION_TO_OCCUPATIONS = {
     0: TELEVISION_ROT_0_POINTS,
-    45: TELEVISION_ROT_45_POINTS,
     90: TELEVISION_ROT_90_POINTS,
-    135: TELEVISION_ROT_135_POINTS,
     180: TELEVISION_ROT_180_POINTS,
-    225: TELEVISION_ROT_225_POINTS,
     270: TELEVISION_ROT_270_POINTS,
-    315: TELEVISION_ROT_315_POINTS,
-    360: TELEVISION_ROT_360_POINTS,
 }
 
 TRAIN_SCENE_NAMES = [
     SCENES_NAMES_SPLIT_BY_TYPE[j][i] for j in range(3) for i in range(20)
 ]
 
-TV_STAND_ROT_0_POINTS = [(0.25 * i, 0.25 * j) for i in range(-2, 3) for j in range(-1, 2)]
-TV_STAND_ROT_90_POINTS = [(0.25 * i, 0.25 * j) for i in range(-1, 2) for j in range(-2, 3)]
+TV_STAND_ROT_0_POINTS = [
+    (0.25 * i, 0.25 * j) for i in range(-2, 3) for j in range(-1, 2)
+]
+TV_STAND_ROT_90_POINTS = [
+    (0.25 * i, 0.25 * j) for i in range(-1, 2) for j in range(-2, 3)
+]
 TV_STAND_ROT_180_POINTS = TV_STAND_ROT_0_POINTS
 TV_STAND_ROT_270_POINTS = TV_STAND_ROT_90_POINTS
-
 TV_STAND_ROTATION_TO_OCCUPATIONS = {
     0: TV_STAND_ROT_0_POINTS,
     90: TV_STAND_ROT_90_POINTS,
