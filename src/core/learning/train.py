@@ -4,6 +4,7 @@ import sys
 import traceback
 import warnings
 from typing import Optional, Dict
+import pickle
 
 import networkx
 import torch
@@ -66,6 +67,7 @@ def train(
             agent.sync_with_shared(shared_model)
 
             while True:
+                # Agent is actually an object of the MultiAgent class holding both the agents
                 agent_iterator = experiment.init_train_agent(
                     agent=agent, episode_init_queue=episode_init_queue
                 )

@@ -10,7 +10,7 @@ from src.core.learning.model import Model
 # this config is using the Cordial Loss (cl) and SYNC Policies (abstracted from description on https://github.com/allenai/cordial-sync)
 class FurnLiftMinDistMixtureConfig(FurnLiftBaseConfig):
     
-    min_dist_between_agents_to_pickup = 4       # Env/episode config
+    min_dist_between_agents_to_pickup = 8       # Env/episode config
     visible_agents = True
     turn_off_communication = False              # Model config
     agent_class = MultiAgent                    # Agent config

@@ -21,7 +21,7 @@ class FurnLiftBaseConfig(ExperimentConfig, ABC):
     include_depth_frame = False
     # CVPR 2019 baselines allowed intersection of agent.
     # With new capabilities in AI2Thor, we can switch on/off this option
-    allow_agents_to_intersect = True
+    allow_agents_to_intersect = False
 
     # Model config
     state_repr_length = 512
@@ -38,8 +38,8 @@ class FurnLiftBaseConfig(ExperimentConfig, ABC):
     # Training config
     max_ep_using_expert_actions = 10000
     dagger_mode = True
-    train_scenes = CONSTANTS.TRAIN_SCENE_NAMES[20:40]
-    valid_scenes = CONSTANTS.VALID_SCENE_NAMES[5:10]
+    train_scenes = CONSTANTS.TRAIN_SCENE_NAMES
+    valid_scenes = CONSTANTS.VALID_SCENE_NAMES
     use_a3c_loss_when_not_expert_forcing = True
 
     # Misc (e.g. visualization)
@@ -54,6 +54,7 @@ class FurnLiftBaseConfig(ExperimentConfig, ABC):
     def get_init_train_params(cls):
         init_train_params = {
             "scenes": cls.train_scenes,
+            #"scenes": ['FloorPlan214_physics' ],
             "num_agents": cls.num_agents,
             "object_type": "Television",
             "episode_class": cls.episode_class,

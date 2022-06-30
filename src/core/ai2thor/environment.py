@@ -22,17 +22,17 @@ from src.core.utils.misc import round_to_factor
 
 class AI2ThorEnvironment(object):
     def __init__(
-        self,
-        time_scale: float = 1.0,
-        visibility_distance: float = CONSTANTS.VISIBILITY_DISTANCE,
-        fov: float = CONSTANTS.FOV,
-        restrict_to_initially_reachable_points: bool = False,
-        num_agents: int = 1,
-        visible_agents: bool = True,
-        render_depth_image: bool = False,
-        platform = CloudRendering,
-        always_return_visible_range: bool = False,
-        allow_agents_to_intersect: bool = False,
+            self,
+            time_scale: float = 1.0,
+            visibility_distance: float = CONSTANTS.VISIBILITY_DISTANCE,
+            fov: float = CONSTANTS.FOV,
+            restrict_to_initially_reachable_points: bool = False,
+            num_agents: int = 1,
+            visible_agents: bool = True,
+            render_depth_image: bool = False,
+            platform=CloudRendering,
+            always_return_visible_range: bool = False,
+            allow_agents_to_intersect: bool = False,
     ) -> None:
         self.num_agents = num_agents
         self.controller = Controller(platform=platform)
@@ -85,12 +85,12 @@ class AI2ThorEnvironment(object):
         return self._started
 
     def start(
-        self,
-        scene_name: Optional[str],
-        move_mag: float = 0.25,
-        player_screen_width=300,
-        player_screen_height=300,
-        quality="Very Low",
+            self,
+            scene_name: Optional[str],
+            move_mag: float = 0.25,
+            player_screen_width=300,
+            player_screen_height=300,
+            quality="Very Low",
     ) -> None:
 
         if self.platform == CloudRendering and (player_screen_height != 300 or player_screen_height != 300):
@@ -124,7 +124,7 @@ class AI2ThorEnvironment(object):
             self._started = False
 
     def reset(self, scene_name: Optional[str], move_mag: float = 0.25):
-    
+
         self.move_mag = move_mag
         self.grid_size = self.move_mag
         self._grid_size_digits = [
@@ -173,16 +173,16 @@ class AI2ThorEnvironment(object):
         self._initially_reachable_points = self.controller.last_event.metadata["actionReturn"]
 
     def teleport_agent_to(
-        self,
-        x: float,
-        y: float,
-        z: float,
-        rotation: float,
-        horizon: float,
-        standing: Optional[bool] = False,
-        force_action: bool = False,
-        only_initially_reachable: bool = False,
-        agent_id: int = None
+            self,
+            x: float,
+            y: float,
+            z: float,
+            rotation: float,
+            horizon: float,
+            standing: Optional[bool] = False,
+            force_action: bool = False,
+            only_initially_reachable: bool = False,
+            agent_id: int = None,
     ) -> None:
         if self.num_agents == 1 and agent_id == -1:
             agent_id = 0
@@ -217,11 +217,11 @@ class AI2ThorEnvironment(object):
         )
 
     def random_reachable_state(
-        self,
-        seed: int = None,
-        specific_rotations=(0, 90, 180, 270),
-        specific_horizons=(0, 30, 60, 330),
-        only_initially_reachable: bool = False,
+            self,
+            seed: int = None,
+            specific_rotations=(0, 90, 180, 270),
+            specific_horizons=(0, 30, 60, 330),
+            only_initially_reachable: bool = False,
     ) -> Dict:
         if seed is not None:
             random.seed(seed)
@@ -237,11 +237,11 @@ class AI2ThorEnvironment(object):
         return state
 
     def randomize_agent_location(
-        self,
-        seed: int = None,
-        partial_position: Optional[Dict[str, float]] = None,
-        agent_id: int = None,
-        only_initially_reachable: bool = False,
+            self,
+            seed: int = None,
+            partial_position: Optional[Dict[str, float]] = None,
+            agent_id: int = None,
+            only_initially_reachable: bool = False,
     ) -> Dict:
         if partial_position is None:
             partial_position = {}
@@ -285,8 +285,8 @@ class AI2ThorEnvironment(object):
 
     @property
     def currently_reachable_points(self) -> List[Dict[str, float]]:
-        self.step({"action": "GetReachablePositions"})
-        return self.last_event.metadata["actionReturn"]  # type:ignore
+        self.step({"action": "GetReachablePositions", "agentId": 0})
+        return self.last_event.metadata["actionReturn"]   # type:ignore
 
     def refresh_initially_reachable(self):
         self._initially_reachable_points = self.currently_reachable_points
@@ -312,7 +312,7 @@ class AI2ThorEnvironment(object):
         return unreachable_points
 
     def _points_to_matrix(
-        self, points: List[Dict[str, float]], padding: float = 0.0
+            self, points: List[Dict[str, float]], padding: float = 0.0
     ) -> Tuple[List[List[bool]], Dict[Tuple, Tuple]]:
         xz_set = set(
             (
@@ -344,17 +344,17 @@ class AI2ThorEnvironment(object):
         return matrix, point_to_element_map
 
     def get_currently_reachable_points_matrix(
-        self, padding: float = 0.0
+            self, padding: float = 0.0
     ) -> Tuple[List[List[bool]], Dict[Tuple, Tuple]]:
         return self._points_to_matrix(self.currently_reachable_points, padding=padding)
 
     def get_initially_reachable_points_matrix(
-        self, padding: float = 0.0
+            self, padding: float = 0.0
     ) -> Tuple[List[List[bool]], Dict[Tuple, Tuple]]:
         return self._points_to_matrix(self.initially_reachable_points, padding=padding)
 
     def get_current_occupancy_matrix(
-        self, padding: float = 0.0, use_initially_reachable_points_matrix: bool = False
+            self, padding: float = 0.0, use_initially_reachable_points_matrix: bool = False
     ) -> Tuple[np.ndarray, Dict[Tuple, Tuple]]:
         if use_initially_reachable_points_matrix:
             (
@@ -384,7 +384,7 @@ class AI2ThorEnvironment(object):
         return matrix, point_to_element_map
 
     def get_current_occupancy_matrices_two_agents(
-        self, padding: float = 0.0, use_initially_reachable_points_matrix: bool = False
+            self, padding: float = 0.0, use_initially_reachable_points_matrix: bool = False
     ) -> Tuple[List[np.ndarray], Dict[Tuple, Tuple]]:
         if use_initially_reachable_points_matrix:
             (
@@ -435,7 +435,7 @@ class AI2ThorEnvironment(object):
         return matrix_all_agents, point_to_element_map
 
     def get_current_multi_agent_occupancy_tensors(
-        self, padding: float = 0.0, use_initially_reachable_points_matrix: bool = False
+            self, padding: float = 0.0, use_initially_reachable_points_matrix: bool = False
     ) -> Tuple[List[np.ndarray], Dict[Tuple, Tuple]]:
         if use_initially_reachable_points_matrix:
             (
@@ -482,7 +482,7 @@ class AI2ThorEnvironment(object):
         )
 
     def get_current_multi_agent_occupancy_tensors_no_rot(
-        self, padding: float = 0.0, use_initially_reachable_points_matrix: bool = False
+            self, padding: float = 0.0, use_initially_reachable_points_matrix: bool = False
     ) -> Tuple[List[np.ndarray], Dict[Tuple, Tuple]]:
         if use_initially_reachable_points_matrix:
             (
@@ -559,7 +559,7 @@ class AI2ThorEnvironment(object):
         return tuple(self.get_agent_metadata(i) for i in range(self.num_agents))
 
     def step(
-        self, action_dict: Dict[str, Union[str, int, float]]
+            self, action_dict: Dict[str, Union[str, int, float]]
     ) -> Event:
         action = action_dict["action"]
         agent_id = action_dict.get("agentId")
@@ -570,6 +570,14 @@ class AI2ThorEnvironment(object):
         else:
             assert self.num_agents == 2
             agent_id = 0
+
+        # if (
+        #     self.allow_agents_to_intersect
+        #     and "allowAgentsToIntersect" not in action_dict
+        # ):
+            # This was set to True in the original code. Changed to False, as this is an invalid command in this new AI2Thor version
+            # action_dict["allowAgentsToIntersect"] = False
+
 
         if "MoveAgents" in action:
             assert "Object" in action
@@ -590,7 +598,7 @@ class AI2ThorEnvironment(object):
                     for i in range(self.num_agents)
                 ]
                 if any(
-                    t not in self.initially_reachable_points_set for t in end_locations
+                        t not in self.initially_reachable_points_set for t in end_locations
                 ):
                     for i in range(self.num_agents):
                         self.teleport_agent_to(
@@ -607,7 +615,8 @@ class AI2ThorEnvironment(object):
                     )
                     self.last_event.events[agent_id].metadata["lastAction"] = action
                     self.last_event.events[agent_id].metadata["lastActionSuccess"] = False
-                    self.last_event.events[agent_id].metadata["errorMessage"] = "Moved to location outside of initially reachable points."
+                    self.last_event.events[agent_id].metadata[
+                        "errorMessage"] = "Moved to location outside of initially reachable points."
                     self.last_event.metadata = self.last_event.events[agent_id].metadata
 
         elif "Move" in action and "Hand" not in action:  # type: ignore
@@ -628,7 +637,8 @@ class AI2ThorEnvironment(object):
                     )
                     self.last_event.metadata["lastAction"] = action
                     self.last_event.metadata["lastActionSuccess"] = False
-                    self.last_event.metadata["errorMessage"] = "Moved to location outside of initially reachable points."
+                    self.last_event.metadata[
+                        "errorMessage"] = "Moved to location outside of initially reachable points."
         elif "RandomizeHideSeekObjects" in action:
             last_positions = [
                 self.get_agent_location(agent_id=i) for i in range(self.num_agents)
@@ -655,11 +665,11 @@ class AI2ThorEnvironment(object):
 
     @staticmethod
     def position_dist(
-        p0: Mapping[str, Any], p1: Mapping[str, Any], use_l1: bool = False
+            p0: Mapping[str, Any], p1: Mapping[str, Any], use_l1: bool = False
     ) -> float:
         if use_l1:
             return (
-                abs(p0["x"] - p1["x"]) + abs(p0["y"] - p1["y"]) + abs(p0["z"] - p1["z"])
+                    abs(p0["x"] - p1["x"]) + abs(p0["y"] - p1["y"]) + abs(p0["z"] - p1["z"])
             )
         else:
             return math.sqrt(
@@ -669,7 +679,7 @@ class AI2ThorEnvironment(object):
             )
 
     def closest_object_with_properties(
-        self, properties: Dict[str, Any]
+            self, properties: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
         agent_pos = self.controller.last_event.metadata["agent"]["position"]
         min_dist = float("inf")
@@ -696,7 +706,7 @@ class AI2ThorEnvironment(object):
         return self.closest_object_with_properties(properties)
 
     def closest_reachable_point_to_position(
-        self, position: Dict[str, float]
+            self, position: Dict[str, float]
     ) -> Tuple[Dict[str, float], float]:
         target = np.array([position["x"], position["z"]])
         min_dist = float("inf")
@@ -775,12 +785,12 @@ class AI2ThorEnvironment(object):
         return {"x": agent_x, "z": agent_z}
 
     def current_matrix_frame(
-        self,
-        agent_id: int,
-        matrix: np.ndarray,
-        point_to_element_map: Dict[Tuple[float, float], Tuple[int, int]],
-        d_ahead: int,
-        d_side: int,
+            self,
+            agent_id: int,
+            matrix: np.ndarray,
+            point_to_element_map: Dict[Tuple[float, float], Tuple[int, int]],
+            d_ahead: int,
+            d_side: int,
     ) -> np.ndarray:
         padded_matrix, point_to_pad_element_map = pad_matrix(
             matrix, pad=max(d_ahead, d_side), point_to_element_map=point_to_element_map
@@ -793,26 +803,26 @@ class AI2ThorEnvironment(object):
 
         if rotation == 0:
             local_ego_matrix = padded_matrix[
-                agent_row - d_ahead : agent_row,
-                agent_col - d_side : agent_col + d_side + 1,
-            ]
+                               agent_row - d_ahead: agent_row,
+                               agent_col - d_side: agent_col + d_side + 1,
+                               ]
         elif rotation == 90:
             local_matrix = padded_matrix[
-                agent_row - d_side : agent_row + d_side + 1,
-                agent_col + 1 : agent_col + d_ahead + 1,
-            ]
+                           agent_row - d_side: agent_row + d_side + 1,
+                           agent_col + 1: agent_col + d_ahead + 1,
+                           ]
             local_ego_matrix = np.rot90(local_matrix, 1)
         elif rotation == 180:
             local_matrix = padded_matrix[
-                agent_row + 1 : agent_row + d_ahead + 1,
-                agent_col - d_side : agent_col + d_side + 1,
-            ]
+                           agent_row + 1: agent_row + d_ahead + 1,
+                           agent_col - d_side: agent_col + d_side + 1,
+                           ]
             local_ego_matrix = np.rot90(local_matrix, 2)
         elif rotation == 270:
             local_matrix = padded_matrix[
-                agent_row - d_side : agent_row + d_side + 1,
-                agent_col - d_ahead : agent_col,
-            ]
+                           agent_row - d_side: agent_row + d_side + 1,
+                           agent_col - d_ahead: agent_col,
+                           ]
             local_ego_matrix = np.rot90(local_matrix, 3)
         else:
             raise Exception("Rotation must be one of 0, 90, 180, or 270.")
@@ -820,11 +830,11 @@ class AI2ThorEnvironment(object):
         return local_ego_matrix
 
     def current_allocentric_matrix_frame(
-        self,
-        agent_id: int,
-        matrix: np.ndarray,
-        point_to_element_map: Dict[Tuple[float, float], Tuple[int, int]],
-        d_each_side: int,
+            self,
+            agent_id: int,
+            matrix: np.ndarray,
+            point_to_element_map: Dict[Tuple[float, float], Tuple[int, int]],
+            d_each_side: int,
     ) -> np.ndarray:
         padded_matrix, point_to_pad_element_map = pad_matrix(
             matrix, pad=d_each_side, point_to_element_map=point_to_element_map
@@ -835,17 +845,17 @@ class AI2ThorEnvironment(object):
         (agent_row, agent_col) = point_to_pad_element_map[(agent_x, agent_z)]
 
         local_allo_matrix = padded_matrix[
-            agent_row - d_each_side : agent_row + d_each_side + 1,
-            agent_col - d_each_side : agent_col + d_each_side + 1,
-        ]
+                            agent_row - d_each_side: agent_row + d_each_side + 1,
+                            agent_col - d_each_side: agent_col + d_each_side + 1,
+                            ]
         assert local_allo_matrix.shape == (2 * d_each_side + 1, 2 * d_each_side + 1)
         return local_allo_matrix
 
     def current_allocentric_matrix_frame_full_range_center(
-        self,
-        matrix: np.ndarray,
-        point_to_element_map: Dict[Tuple[float, float], Tuple[int, int]],
-        desired_output_shape: Tuple[int, int],
+            self,
+            matrix: np.ndarray,
+            point_to_element_map: Dict[Tuple[float, float], Tuple[int, int]],
+            desired_output_shape: Tuple[int, int],
     ) -> np.ndarray:
         global_allo_matrix, point_to_pad_element_map = pad_matrix_to_size_center(
             matrix,
@@ -861,7 +871,7 @@ class AI2ThorEnvironment(object):
         return self.controller.last_event.events[agent_id].metadata["objects"]
 
     def all_objects_with_properties(
-        self, properties: Dict[str, Any], agent_id: int = None
+            self, properties: Dict[str, Any], agent_id: int = None
     ) -> List[Dict[str, Any]]:
         if self.num_agents == 1:
             agent_id = 0
@@ -883,9 +893,9 @@ class AI2ThorEnvironment(object):
         return self.all_objects_with_properties({"visible": True}, agent_id=agent_id)
 
     def get_object_by_id(
-        self, object_id: str, agent_id: Optional[int] = None
+            self, object_id: str, agent_id: Optional[int] = None
     ) -> Dict[str, Any]:
-        if self.num_agents == 0:
+        if self.num_agents == 1:
             agent_id = 0
         return [
             o
@@ -898,18 +908,18 @@ class AI2ThorEnvironmentWithGraph(AI2ThorEnvironment):
     _cached_graphs: Dict[str, nx.DiGraph] = {}
 
     def __init__(
-        self,
-        time_scale: float = 1.0,
-        visibility_distance: float = CONSTANTS.VISIBILITY_DISTANCE,
-        fov: float = CONSTANTS.FOV,
-        restrict_to_initially_reachable_points: bool = False,
-        num_agents: int = 1,
-        visible_agents: bool = True,
-        render_depth_image: bool = False,
-        override_graph: Union[
-            nx.classes.digraph.DiGraph, nx.classes.graph.Graph
-        ] = None,
-        **kwargs,
+            self,
+            time_scale: float = 1.0,
+            visibility_distance: float = CONSTANTS.VISIBILITY_DISTANCE,
+            fov: float = CONSTANTS.FOV,
+            restrict_to_initially_reachable_points: bool = False,
+            num_agents: int = 1,
+            visible_agents: bool = True,
+            render_depth_image: bool = False,
+            override_graph: Union[
+                nx.classes.digraph.DiGraph, nx.classes.graph.Graph
+            ] = None,
+            **kwargs,
     ):
         super(AI2ThorEnvironmentWithGraph, self).__init__(
             time_scale=time_scale,
@@ -943,7 +953,7 @@ class AI2ThorEnvironmentWithGraph(AI2ThorEnvironment):
             g = self._cached_graphs[self.scene_name]
             initially_reachable_keys_set = set(
                 self.get_key(p)
-                for p in self.initially_reachable_points_with_rotations(horizon=30)
+                for p in self.initially_reachable_points_with_rotations(horizon=0)
             )
 
             for n in list(g.nodes()):
@@ -982,10 +992,10 @@ class AI2ThorEnvironmentWithGraph(AI2ThorEnvironment):
             g.add_edge(s, t, action=action)
         elif dist == 0.25 and s_rot == t_rot:
             if (
-                (s_rot == 0 and ae(t_z - s_z, 0.25))
-                or (s_rot == 90 and ae(t_x - s_x, 0.25))
-                or (s_rot == 180 and ae(t_z - s_z, -0.25))
-                or (s_rot == 270 and ae(t_x - s_x, -0.25))
+                    (s_rot == 0 and ae(t_z - s_z, 0.25))
+                    or (s_rot == 90 and ae(t_x - s_x, 0.25))
+                    or (s_rot == 180 and ae(t_z - s_z, -0.25))
+                    or (s_rot == 270 and ae(t_x - s_x, -0.25))
             ):
                 g.add_edge(s, t, action="MoveAhead")
 
@@ -1003,7 +1013,7 @@ class AI2ThorEnvironmentWithGraph(AI2ThorEnvironment):
     def graph(self):
         if self.scene_name not in self._cached_graphs:
             g = nx.DiGraph()
-            points = self.initially_reachable_points_with_rotations(horizon=30)
+            points = self.initially_reachable_points_with_rotations(horizon=0)
             for p in points:
                 self._add_node_to_graph(g, self.get_key(p))
 
@@ -1046,10 +1056,10 @@ class AI2ThorEnvironmentWithGraph(AI2ThorEnvironment):
         p1 = possible_neighbor
 
         return (
-            (ae(p1["x"] - p0["x"], 0.25) and ae(p1["rotation"], 270))
-            or (ae(p1["x"] - p0["x"], -0.25) and ae(p1["rotation"], 90))
-            or (ae(p1["z"] - p0["z"], 0.25) and ae(p1["rotation"], 180))
-            or (ae(p1["z"] - p0["z"], -0.25) and ae(p1["rotation"], 0))
+                (ae(p1["x"] - p0["x"], 0.25) and ae(p1["rotation"], 270))
+                or (ae(p1["x"] - p0["x"], -0.25) and ae(p1["rotation"], 90))
+                or (ae(p1["z"] - p0["z"], 0.25) and ae(p1["rotation"], 180))
+                or (ae(p1["z"] - p0["z"], -0.25) and ae(p1["rotation"], 0))
         )
 
     def _check_contains_key(self, key: Tuple[float, float, int, int], add_if_not=True):
