@@ -395,6 +395,7 @@ class MultiAgent(RLAgent):
         #   mixture: is tuple of len nagents
         #   marginal: is tuple of len nagents
         if take_expert_action:
+
             assert not overriding_actions
             # take actions as per the expert.
             if joint_logit_all:
@@ -409,6 +410,7 @@ class MultiAgent(RLAgent):
                     ]
                 )
             else:
+                # TypeError: 'NoneType' object is not iterable. Somehow the expert actions array is empty, which should not happen
                 actions = tuple(self.expert_actions[-1])
 
         elif overriding_actions:

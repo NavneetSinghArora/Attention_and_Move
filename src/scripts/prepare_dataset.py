@@ -18,7 +18,7 @@ class PrepareDataset:
 
     def __init__(self):
         # Initializing the controller
-        self.controller = Controller(platform=CloudRendering,
+        self.controller = Controller(
                                      agentCount=2, agentMode="default", visibilityDistance=1.5, scene="FloorPlan212",
                                      gridSize=0.25, snapToGrid=True, rotateStepDegrees=30,
                                      renderDepthImage=False, renderInstanceSegmentation=False,

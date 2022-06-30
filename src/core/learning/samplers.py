@@ -16,6 +16,8 @@ import src.core.utils.constants as CONSTANTS
 from src.core.ai2thor.environment import AI2ThorEnvironmentWithGraph
 from src.core.learning.episodes import JointNavigationEpisode
 from src.core.learning.multiagent import MultiAgent
+from src.core.services.birds_eye_view import BirdsEyeView
+from src.core.services.viewer import Viewer
 from src.core.utils.sampler import create_environment, save_talk_reply_data_frame
 from src.core.utils.ai2thor import manhattan_dists_between_positions
 from src.core.utils.multiagent import TrainingCompleteException
@@ -30,8 +32,8 @@ class FurnLiftEpisodeSamplers(object):
         env_args=None,
         max_episode_length: int = 500,
         episode_class: Callable = JointNavigationEpisode,
-        player_screen_height=300,
-        player_screen_width=300,
+        player_screen_height=224,
+        player_screen_width=224,
         save_talk_reply_probs_path: Optional[str] = None,
         min_dist_between_agents_to_pickup: int = 0,
         max_ep_using_expert_actions: int = 10000,
@@ -87,7 +89,7 @@ class FurnLiftEpisodeSamplers(object):
         return False
 
     def __call__(
-        self,
+        self, 
         agent: MultiAgent,
         agent_location_seed=None,
         env: Optional[AI2ThorEnvironmentWithGraph] = None,
@@ -108,13 +110,30 @@ class FurnLiftEpisodeSamplers(object):
                     allow_agents_to_intersect=self.allow_agents_to_intersect,
                 )
                 env.start(
-                    "FloorPlan1_physics",
+                    "FloorPlan201_physics",
                     move_mag=self.grid_size,
                     quality="Very Low",
                     player_screen_height=self.player_screen_height,
                     player_screen_width=self.player_screen_width,
                 )
 
+                # event = env.step({
+                #     'action': "GetMapViewCameraProperties"
+                # })
+                # env.step({
+                #     'action': "AddThirdPartyCamera",
+                #     'agentId': 1,
+                #     **event.metadata["actionReturn"]
+                # })
+                # event = env.step(
+                #     {
+                #         "action": "Done",
+                #         "agentId": 0,
+                #     }
+                # )
+                #
+                # birds_eye_view = BirdsEyeView()
+                # birds_eye_view.update(event.events[0])
         if (
             self.max_ep_using_expert_actions != 0
             and self.current_train_episode <= self.max_ep_using_expert_actions
@@ -183,17 +202,15 @@ class FurnLiftEpisodeSamplers(object):
 
             object = objects_of_type[0]
             object_id = object["objectId"]
-            obj_rot = round(object["rotation"]["y"])
-            if obj_rot == 360:
-                obj_rot = 0
-
-            object_points_set = set(
-                (
-                    round(object["position"]["x"] + t[0], 2),
-                    round(object["position"]["z"] + t[1], 2),
-                )
-                for t in CONSTANTS.TELEVISION_ROTATION_TO_OCCUPATIONS[obj_rot]
-            )
+            # obj_rot = int(object["rotation"]["y"])
+            #
+            # object_points_set = set(
+            #     (
+            #         round(object["position"]["x"] + t[0], 2),
+            #         round(object["position"]["z"] + t[1], 2),
+            #     )
+            #     for t in CONSTANTS.TELEVISION_ROTATION_TO_OCCUPATIONS[obj_rot]
+            # )
 
             # Find agent metadata from where the target is visible
             env.step(
@@ -207,11 +224,12 @@ class FurnLiftEpisodeSamplers(object):
             distances = []
             for i, r in enumerate(env.last_event.metadata["actionFloatsReturn"]):
                 possible_targets[i]["rotation"] = int(r)
-                possible_targets[i]["horizon"] = 30
+                possible_targets[i]["horizon"] = 0
                 distances.append(
                     env.position_dist(object["position"], possible_targets[i])
                 )
 
+            # So here the targets are sorted by distance in ascending order and it returns (x, z, rotation, horizon) using get_key and these values are rounded off
             possible_targets = [
                 env.get_key(x[1])
                 for x in sorted(
@@ -264,21 +282,13 @@ class FurnLiftEpisodeSamplers(object):
             failure_reasons = []
             for _ in range(10):
 
-                # FIXME: HERE IS WHERE THINGS SUPPOSELY GO TERRIBLY WRONG!
-
-                # HOWTO: start by activating the environment for aam
-                #        export PYTHONPATH=$PWD in the root folder of project
-                #        python rl_multi_agent/main.py --task furnlift_vision_mixture_cl_config --experiment_dir rl_multi_agent/experiments --platform=Linux64 --gpu_ids 0 --amsgrad t --workers 2 --num_steps 50 --save_freq 2000 --max_ep 100000
-                # remove --platform argument if you want to use CloudRendering!
-
-                # CHANGE: DisableAllObjectsOfType does not seem to disable any Televisions at all
-                # env.step(
-                #     {
-                #         "action": "DisableAllObjectsOfType",
-                #         "objectId": self.object_type,
-                #         "agentId": 0,
-                #     }
-                # )
+                env.step(
+                    {
+                        "action": "DisableAllObjectsOfType",
+                        "objectId": self.object_type,
+                        "agentId": 0,
+                    }
+                )
 
                 # CHANGE: instead get Television and disable by using action "DisableObject"
                 objects_of_type = env.all_objects_with_properties(
@@ -301,7 +311,7 @@ class FurnLiftEpisodeSamplers(object):
                         seed=agent_location_seed[agent_id]
                         if agent_location_seed
                         else None,
-                        partial_position={"horizon": 30},
+                        partial_position={"horizon": 0},
                         only_initially_reachable=True,
                     )
 
@@ -312,16 +322,9 @@ class FurnLiftEpisodeSamplers(object):
                         "agentId": 0,
                     }
                 )
-                if (
-                    env.last_event.metadata["lastAction"]
-                    != "RandomlyCreateAndPlaceObjectOnFloor"
-                    or not env.last_event.metadata["lastActionSuccess"]
-                ):
-                    failure_reasons.append(
-                        "Could not randomize location of {}.".format(
-                            self.object_type, scene
-                        )
-                    )
+
+                if env.last_event.metadata["lastAction"] != "RandomlyCreateAndPlaceObjectOnFloor" or not env.last_event.metadata["lastActionSuccess"]:
+                    failure_reasons.append("Could not randomize location of {}.".format(self.object_type, scene))
                     continue
 
                 env.refresh_initially_reachable()
@@ -335,15 +338,15 @@ class FurnLiftEpisodeSamplers(object):
 
                 object = objects_of_type[0]
                 object_id = object["objectId"]
-
-                obj_rot = round(object["rotation"]["y"])    # CHANGE: needs round, to return 90° instead of 89°!
-                object_points_set = set(
-                    (
-                        round(object["position"]["x"] + t[0], 2),
-                        round(object["position"]["z"] + t[1], 2),
-                    )
-                    for t in CONSTANTS.TELEVISION_ROTATION_TO_OCCUPATIONS[obj_rot]
-                )
+                #
+                # obj_rot = int(object["rotation"]["y"])    # CHANGE: needs round, to return 90° instead of 89°!
+                # object_points_set = set(
+                #     (
+                #         round(object["position"]["x"] + t[0], 2),
+                #         round(object["position"]["z"] + t[1], 2),
+                #     )
+                #     for t in CONSTANTS.TELEVISION_ROTATION_TO_OCCUPATIONS[obj_rot]
+                # )
 
                 for agent_id in range(self.num_agents):
                     env.randomize_agent_location(
@@ -351,10 +354,16 @@ class FurnLiftEpisodeSamplers(object):
                         seed=agent_location_seed[agent_id]
                         if agent_location_seed
                         else None,
-                        partial_position={"horizon": 30},
+                        partial_position={"horizon": 0},
                         only_initially_reachable=True,
                     )
 
+                env.step(
+                    {
+                        "action": "GetReachablePositions",
+                        "agentId": 0,
+                    }
+                )
                 # Find agent metadata from where the target is visible
                 env.step(
                     {
@@ -367,7 +376,7 @@ class FurnLiftEpisodeSamplers(object):
                 distances = []
                 for i, r in enumerate(env.last_event.metadata["actionFloatsReturn"]):
                     possible_targets[i]["rotation"] = int(r)
-                    possible_targets[i]["horizon"] = 30
+                    possible_targets[i]["horizon"] = 0
                     distances.append(
                         env.position_dist(object["position"], possible_targets[i])
                     )
@@ -380,6 +389,7 @@ class FurnLiftEpisodeSamplers(object):
                 ]
 
                 if self.min_dist_between_agents_to_pickup != 0:
+                    # In this, it takes only the x and z value
                     possible_targets_array = np.array([t[:2] for t in possible_targets])
                     manhat_dist_mat = np.abs(
                         (
@@ -407,9 +417,12 @@ class FurnLiftEpisodeSamplers(object):
                             )
                     
                     if len(good_cliques) == 0:
+                        # print(possible_targets_array)
+                        # print('=========================')
+                        # print(manhat_dist_mat)
                         failure_reasons.append(
-                            "Failed to find a tuple of {} targets all {} steps apart.".format(
-                                env.num_agents, self.min_dist_between_agents_to_pickup
+                            "Failed to find a tuple of {} targets all {} steps apart in scene {} having possible targets {}".format(
+                                env.num_agents, self.min_dist_between_agents_to_pickup, env.scene_name, manhat_dist_mat
                             )
                         )
                         continue
@@ -470,7 +483,7 @@ class FurnLiftEpisodeSamplers(object):
             max_steps=self.max_episode_length,
             num_agents=self.num_agents,
             min_dist_between_agents_to_pickup=self.min_dist_between_agents_to_pickup,
-            object_points_set=object_points_set,
+            #object_points_set=object_points_set,
             include_depth_frame=self.include_depth_frame,
         )
 

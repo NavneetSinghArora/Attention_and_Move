@@ -12,7 +12,7 @@ def parse_arguments():
     parser.add_argument("--tag", type=str, default="", help="A tag for the run (e.g. lstm-not-gru, trying-new-thing). If not-empty, this tag is used as a subdirectory along the tensorboard path. (default: '')")
     parser.add_argument("--lr", type=float, default=0.0001, metavar="LR", help="Learning rate (default: 0.0001).")
     parser.add_argument("--seed", type=int, default=1, metavar="S", help="Random seed. As A3C is asynchronous, setting this seed has does not guarantee any exact reproducibility from run to run. (default: 1)")
-    parser.add_argument("--workers", type=int, default=1, metavar="W", help="How many training processes to use. (default: 32)")
+    parser.add_argument("--workers", type=int, default=16, metavar="W", help="How many training processes to use. (default: 32)")
     parser.add_argument("--num_steps", type=int, default=50, metavar="NS", help="Number of forward steps in A3C before computing the loss and backproping. (default: 50)")
     parser.add_argument("--shared_optimizer", default=True, metavar="SO", type=str2bool, help="use an optimizer with shared statistics. (default: True)")
     parser.add_argument("--save_freq", type=int, default=1e6, help="Save model after this # of training episodes. (default: 1e+6)")
