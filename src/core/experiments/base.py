@@ -53,8 +53,8 @@ class FurnLiftBaseConfig(ExperimentConfig, ABC):
     @classmethod
     def get_init_train_params(cls):
         init_train_params = {
-            "scenes": cls.train_scenes,
-            #"scenes": ['FloorPlan214_physics' ],
+            # "scenes": cls.train_scenes,
+            "scenes": ['FloorPlan214_physics'],
             "num_agents": cls.num_agents,
             "object_type": "Television",
             "episode_class": cls.episode_class,

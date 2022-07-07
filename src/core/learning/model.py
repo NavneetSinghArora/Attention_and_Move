@@ -7,6 +7,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from src.core.learning.clip_prediction import get_clip_encoding
+
 from src.core.utils.misc import norm_col_init, weights_init, outer_product, outer_sum
 
 
@@ -69,37 +71,46 @@ class Model(nn.Module):
         self.coordinate_actions = coordinate_actions
 
         # input to conv is (num_agents, self.num_inputs_per_agent, 84, 84)
-        self.cnn = nn.Sequential(
-            OrderedDict(
-                [
-                    (
-                        "conv1",
-                        nn.Conv2d(
-                            self.num_inputs_per_agent, 32, 5, stride=1, padding=2
-                        ),
-                    ),
-                    ("maxpool1", nn.MaxPool2d(2, 2)),
-                    ("relu1", nn.ReLU(inplace=True)),
-                    # shape =
-                    ("conv2", nn.Conv2d(32, 32, 5, stride=1, padding=1)),
-                    ("maxpool2", nn.MaxPool2d(2, 2)),
-                    ("relu2", nn.ReLU(inplace=True)),
-                    # shape =
-                    ("conv3", nn.Conv2d(32, 64, 4, stride=1, padding=1)),
-                    ("maxpool3", nn.MaxPool2d(2, 2)),
-                    ("relu3", nn.ReLU(inplace=True)),
-                    # shape =
-                    (
-                        "conv4",
-                        nn.Conv2d(64, final_cnn_channels, 3, stride=1, padding=1),
-                    ),
-                    ("maxpool4", nn.MaxPool2d(2, 2)),
-                    ("relu4", nn.ReLU(inplace=True)),
-                    # shape = (4, 4)
-                ]
-            )
-        )
+        print('Num of agents', num_agents)
 
+        # self.cnn = nn.Sequential(
+        #     OrderedDict(
+        #         [
+        #             # shape = 3x84x84
+        #             (
+        #                 "conv1",
+        #                 nn.Conv2d(
+        #                     self.num_inputs_per_agent, 32, 5, stride=1, padding=2
+        #                 ),
+        #             ),
+        #             # shape = 32x84x84
+        #             ("maxpool1", nn.MaxPool2d(2, 2)),
+        #             ("relu1", nn.ReLU(inplace=True)),
+        #             # shape = 32x42x42
+        #             ("conv2", nn.Conv2d(32, 32, 5, stride=1, padding=1)),
+        #             # shape = 32x40x40
+        #             ("maxpool2", nn.MaxPool2d(2, 2)),
+        #             # shape = 32x20x20
+        #             ("relu2", nn.ReLU(inplace=True)),
+        #             # shape = 32x20x20
+        #             ("conv3", nn.Conv2d(32, 64, 4, stride=1, padding=1)),
+        #             # shape = 64x19x19
+        #             ("maxpool3", nn.MaxPool2d(2, 2)),
+        #             # shape = 64x9x9
+        #             ("relu3", nn.ReLU(inplace=True)),
+        #             # shape = 64x9x9
+        #             (
+        #                 "conv4",
+        #                 nn.Conv2d(64, final_cnn_channels, 3, stride=1, padding=1),
+        #             ),
+        #             # shape = 64x9x9
+        #             ("maxpool4", nn.MaxPool2d(2, 2)),
+        #             # shape = 64x4x4
+        #             ("relu4", nn.ReLU(inplace=True)),
+        #             # shape = (4, 4)
+        #         ]
+        #     )
+        # )
         # Vocab embed
         self.talk_embeddings = nn.Embedding(num_talk_symbols, talk_embed_length)
         self.reply_embeddings = nn.Embedding(num_reply_symbols, reply_embed_length)
@@ -107,7 +118,7 @@ class Model(nn.Module):
         self.talk_symbol_classifier = nn.Linear(state_repr_length, num_talk_symbols)
         self.reply_symbol_classifier = nn.Linear(state_repr_length, num_reply_symbols)
 
-        # Agent embed
+        # Agent embed (MLP)
         self.agent_num_embeddings = nn.Parameter(
             torch.rand(self.num_agents, agent_num_embed_length)
         )
@@ -195,10 +206,10 @@ class Model(nn.Module):
         # Setting initial weights
         self.apply(weights_init)
         relu_gain = nn.init.calculate_gain("relu")
-        self.cnn._modules["conv1"].weight.data.mul_(relu_gain)
-        self.cnn._modules["conv2"].weight.data.mul_(relu_gain)
-        self.cnn._modules["conv3"].weight.data.mul_(relu_gain)
-        self.cnn._modules["conv4"].weight.data.mul_(relu_gain)
+        # self.cnn._modules["conv1"].weight.data.mul_(relu_gain)
+        # self.cnn._modules["conv2"].weight.data.mul_(relu_gain)
+        # self.cnn._modules["conv3"].weight.data.mul_(relu_gain)
+        # self.cnn._modules["conv4"].weight.data.mul_(relu_gain)
 
         self.talk_symbol_classifier.weight.data = norm_col_init(
             self.talk_symbol_classifier.weight.data, 0.01
@@ -220,21 +231,32 @@ class Model(nn.Module):
         if inputs.shape != (self.num_agents, self.num_inputs_per_agent, 84, 84):
             raise Exception("input to model is not as expected, check!")
 
-        x = self.cnn(inputs)
+        # x = self.cnn(inputs)
+        # print(x.shape, '----1')  # 2x64x4x4
         # x.shape == (2, 128, 2, 2)
 
+
+        x = get_clip_encoding(inputs)
+        print(x.shape, '----1')  #
+        # x.shape == (2, 64, 4, 4)
+
         x = x.view(x.size(0), -1)
+        print(x.shape, '----2')
         # x.shape = [num_agents, 512]
 
         x = torch.cat((x, self.agent_num_embeddings), dim=1)
+        print(x.shape, '----3')
         # x.shape = [num_agents, 512 + agent_num_embed_length]
 
         x, hidden = self.lstm(x.unsqueeze(1), hidden)
+        print(x.shape, '----4')
+
         # x.shape = [num_agents, 1, state_repr_length]
         # hidden[0].shape == [1, num_agents, state_repr_length]
         # hidden[1].shape == [1, num_agents, state_repr_length]
 
         x = x.squeeze(1)
+        print(x.shape, '----6')
         # x.shape = [num_agents, state_repr_length]
 
         talk_logits = self.talk_symbol_classifier(x)
@@ -327,3 +349,7 @@ class Model(nn.Module):
             to_return["logit_all"] = self.actor_linear(state_talk_reply_repr)
 
         return to_return
+
+
+# def predict_clip_cs(inputs):
+#     predict_clip(..)

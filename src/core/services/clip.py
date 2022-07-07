@@ -12,13 +12,15 @@ def predict_clip(frame, target_object, target_object_threshold, simulator_proper
 
     obj_classes = simulator_properties['object_classes'].split(',')
 
+    print('Frame: ', frame)
     image = preprocess(Image.fromarray(frame)).unsqueeze(0).to(device)
+    print('Image: ', image)
     text = torch.cat([clip.tokenize(f'a {c}') for c in obj_classes]).to(device)
 
     with torch.no_grad():
         image_features = model.encode_image(image)
         text_features = model.encode_text(text)
-
+    print('Features: ', image_features)
     # Pick the top 5 most similar labels for the image
     image_features /= image_features.norm(dim=-1, keepdim=True)
     # print('image features:', image_features.shape)
