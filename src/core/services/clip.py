@@ -2,16 +2,15 @@ import clip
 import torch
 from os.path import join
 from PIL import Image
-from torchvision.datasets import CIFAR100
+
+from src.core.utils.constants import PROJECT_ROOT_DIR
 
 
-def predict_clip(frame, target_object, target_object_threshold, rootDirectory, simulator_properties):
+def predict_clip(frame, target_object, target_object_threshold, simulator_properties):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    model, preprocess = clip.load('ViT-L/14@336px', device=device, download_root=join(rootDirectory, 'data/external/clip/models/'))
+    model, preprocess = clip.load('ViT-L/14@336px', device=device, download_root=join(PROJECT_ROOT_DIR, 'data/external/clip/models/'))
 
     obj_classes = simulator_properties['object_classes'].split(',')
-
-    # cifar100 = CIFAR100(root=join(rootDirectory, 'data/external/torchvision/datasets/'), download=True, train=False)
 
     image = preprocess(Image.fromarray(frame)).unsqueeze(0).to(device)
     text = torch.cat([clip.tokenize(f'a {c}') for c in obj_classes]).to(device)

@@ -1,12 +1,17 @@
 """
 This script offers the CLI interface for the entire project.
 """
+import click
 
+from hummel.commands import Hummel
 # Importing python libraries for required processing
 # from hummel.commands import Hummel
 from src.core.utils.global_variables import GlobalVariables
 from src.core.utils.simulator.simulator_variables import SimulatorVariables
 from src.core.model.simulator.environment import Environment
+from src.core.utils.constants import CONTEXT_SETTINGS, PROJECT_ROOT_DIR
+from src.core.utils.properties.global_variables import GlobalVariables
+from src.core.utils.simulator.simulator_variables import SimulatorVariables
 # from src.data.prepare_dataset import PrepareDataset
 from pathlib import Path
 import click
@@ -161,23 +166,45 @@ def start_local_training(**kwargs):
         environment.start()
 
 
-# @cli2.command('hummel', context_settings=CONTEXT_SETTINGS)
-# @click.option('-u', '--user', is_flag=False, help='UHH username, i.e. ba*####')
-# @click.option('-i', '--init', is_flag=True, help='Initialize AAM on Hummel')
-# @click.option('-t', '--train', is_flag=True, help='Start training on Hummel')
-# def hummel(**kwargs):
-#     """Run AAM on Hummel"""
-#
-#     if kwargs['init']:
-#         if kwargs['user']:
-#             print("Starting to initialize AAM on Hummel with user={}".format(kwargs['user']))
-#             Hummel.init(username=kwargs['user'])
-#         else:
-#             print('Please provide your UHH username with the option --user=username and retry again!')
-#
-#     if kwargs['train']:
-#         print("Start training on Hummel")
-#         Hummel.train()
+@cli2.command('hummel', context_settings=CONTEXT_SETTINGS)
+@click.option('-u', '--user', is_flag=False, help='UHH username, i.e. ba*####')
+@click.option('-i', '--init', is_flag=True, help='Initialize AAM on Hummel')
+@click.option('-m', '--mnist', is_flag=True, help='Start MNIST-Test')
+@click.option('-t', '--train', is_flag=True, help='Start training on Hummel')
+@click.option('-p', '--platform', is_flag=False, default='CloudRendering', show_default=True, help='Choose between CloudRendering, Linux64, OSXIntel64') # only needed for local debugging
+@click.option('-l', '--lr', is_flag=False, type=float, default=0.0001, show_default=True, help='Learning rate')
+@click.option('-s', '--seed', is_flag=False, type=int, default=1, show_default=True, help='Random seed')
+@click.option('-w', '--workers',is_flag=False, type=int, default=1, show_default=True, help='Number of training processes')
+@click.option('-n', '--num_steps', is_flag=False, type=int, default=50, show_default=True, help='Number of forward steps in A3C')
+@click.option('-f', '--save_freq', is_flag=False, type=int, default=1e6, show_default=True, help='Number of training episodes till save')
+@click.option('-d', '--checkpoints_dir', is_flag=False, type=str, default='output/checkpoints/', show_default=True, help='Folder for trained checkpoints')
+@click.option('-c', '--use_checkpoint', is_flag=False, type=str, default='', show_default=True, help='Checkpoint to resume training from')
+@click.option('-e', '--max_ep', is_flag=False, type=float, default='inf', show_default=True, help='Maximum number of episodes')
+@click.option('-v', '--visualize_test_agent', is_flag=False, type=bool, default=False, show_default=True, help='Create plots and graphics for test agent')
+@click.option('-q', '--use_episode_init_queue', is_flag=False, type=bool, default=False, show_default=True, help='Necessary when evaluating models on fixed datasets')
+def hummel(**kwargs):
+    """Run AAM on Hummel"""
+
+    if kwargs['init']:
+        if kwargs['user']:
+            print("Starting to initialize AAM on Hummel with user={}".format(kwargs['user']))
+            Hummel.init(username=kwargs['user'])
+        else:
+            print('Please provide your UHH username with the option --user=username and retry again!')
+
+    if kwargs['mnist']:
+        print("Start MNIST-Test")
+        Hummel.mnist()
+
+    if kwargs['train']:
+        # remove all parameters that may not be forwarded to main.py (all parameters not contained in arguments.py must be omitted!)
+        kwargs.pop('user')
+        kwargs.pop('init')
+        kwargs.pop('mnist')
+        kwargs.pop('train')
+
+        print("Start training on Hummel")
+        Hummel.train(kwargs)
 
 
 @cli3.command('dataset', context_settings=CONTEXT_SETTINGS)
@@ -196,6 +223,7 @@ def prepare_dataset(**kwargs):
 
     dataset_scenes = kwargs['scene']
     # PrepareDataset(global_properties, dataset_scenes).collect_dataset()
+
 
 
 cli = click.CommandCollection(sources=[cli1, cli3])

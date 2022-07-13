@@ -7,6 +7,7 @@ These are the system-wide properties loaded only once in the entire project.
 from jproperties import Properties
 from os.path import join
 
+from src.core.utils.constants import PROJECT_ROOT_DIR
 
 class LoadProperties:
     """
@@ -18,7 +19,7 @@ class LoadProperties:
         """
         self.configs = Properties()
         self.simulator_properties = {}
-        self.property_file = join(global_properties['root_directory'], global_properties['simulator_configurations'])
+        self.property_file = join(PROJECT_ROOT_DIR, global_properties['simulator_configurations'])
 
     def fetch_properties(self):
         """
