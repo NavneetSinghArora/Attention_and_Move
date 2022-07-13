@@ -1,18 +1,11 @@
 """
 This script offers the CLI interface for the entire project.
 """
-import click
 
 from hummel.commands import Hummel
-# Importing python libraries for required processing
-# from hummel.commands import Hummel
-from src.core.utils.global_variables import GlobalVariables
-from src.core.utils.simulator.simulator_variables import SimulatorVariables
 from src.core.model.simulator.environment import Environment
-from src.core.utils.constants import CONTEXT_SETTINGS, PROJECT_ROOT_DIR
 from src.core.utils.properties.global_variables import GlobalVariables
 from src.core.utils.simulator.simulator_variables import SimulatorVariables
-# from src.data.prepare_dataset import PrepareDataset
 from pathlib import Path
 import click
 
