@@ -15,6 +15,7 @@ def predict_clip(frame, target_object, target_object_threshold, simulator_proper
     image = preprocess(Image.fromarray(frame)).unsqueeze(0).to(device)
     text = torch.cat([clip.tokenize(f'a {c}') for c in obj_classes]).to(device)
 
+
     with torch.no_grad():
         image_features = model.encode_image(image)
         text_features = model.encode_text(text)
@@ -38,3 +39,11 @@ def predict_clip(frame, target_object, target_object_threshold, simulator_proper
         # print(f"{obj_classes[index]:>16s}: {100 * value.item():.2f}%{found}")
 
     return (image_features, text_features, target_found, similarity)
+
+# def custom_clip_accuracy(model, image_features, text_features, object_classes):
+#     image_features /= image_features.norm(dim=-1, keepdim=True)
+#     text_features /= text_features.norm(dim=-1, keepdim=True)
+#
+#     similarity = (100.0 * image_features @ text_features.T).softmax(dim=-1)
+#     values = similarity[0]
+#     print()

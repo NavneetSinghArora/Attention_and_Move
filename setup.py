@@ -67,6 +67,7 @@ requirements = [
     f"torchvision @ https://download.pytorch.org/whl/cu113/torchvision-0.12.0%2Bcu113-cp{python_version}-cp{python_version}-{system}_x86_64.whl",
     "tqdm==4.64.0",
     "typing_extensions==4.2.0",
+    "tensorboard==2.9.1",
     "urllib3==1.26.9",
     "wcwidth==0.2.5",
     "Werkzeug==2.1.2"

@@ -1,17 +1,9 @@
-"""
-
-"""
-
 # Importing python libraries for required processing
-import random
-import sys
 
 from ai2thor.controller import Controller
-from ai2thor.platform import CloudRendering, Linux64, OSXIntel64
-from src.core.utils.constants import PROJECT_ROOT_DIR
-from src.core.services.clip import predict_clip
-from src.core.services.viewer import Viewer
-from src.core.services.common_services import visualize_frames
+from src.core.model.object_detection.clip_detection import ClipObjectDetection
+import random
+import sys
 
 
 class Environment:
@@ -30,6 +22,9 @@ class Environment:
 
         self.global_properties = global_properties
         self.simulator_properties = simulator_properties
+
+        # get global properties
+        self.rootDirectory = self.global_properties['root_directory']
 
         # get simulator properties
         self.agentCount = int(self.simulator_properties['number_of_agents'])
@@ -85,29 +80,7 @@ class Environment:
         print('Agent Positions Randomized')
 
         target_object = self.simulator_properties['target_object']
-        target_object_threshold = self.global_properties['target_object_threshold']
-        print(f"Target Object to be Located: {target_object}")
-
-        # Adding official supported top-down camera (requires AI2THOR 3.3.4+) to be able to interactively plot a
-        # birds eye view
-        event = self.__controller.step(action="GetMapViewCameraProperties")
-        self.__controller.step(action="AddThirdPartyCamera", agentId=0, **event.metadata["actionReturn"])
-        viewer = Viewer(self.agentCount)
-
-        # Agent 1 receives images for both agents, but need to do Agent 0 step to receive agent metadata
-        initial_agent_0_event = self.__controller.step('Done', agentId=0)
-        initial_agent_1_event = self.__controller.step('Done', agentId=1)
-
-        clip_output = {}
-
-        # predicting image content using clip
-        rgb_frames = [event.frame for event in initial_agent_1_event.events]
-        clip_output['agent0'] = predict_clip(rgb_frames[0], target_object, target_object_threshold, self.simulator_properties)
-        clip_output['agent1'] = predict_clip(rgb_frames[1], target_object, target_object_threshold, self.simulator_properties)
-        visualize_frames(rgb_frames, (8,8), 1, PROJECT_ROOT_DIR)
-        print('CLIP shape: ', len(clip_output))
-        # print('CLIP output Agent 0: ', clip_output['agent0'])
-        # print('CLIP output Agent 1: ', clip_output['agent1'])
+        clip_object_detection = ClipObjectDetection(self.global_properties, self.simulator_properties).run()
 
         self._started = True
 
