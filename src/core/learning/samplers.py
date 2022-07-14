@@ -67,6 +67,8 @@ class FurnLiftEpisodeSamplers(object):
         self._current_train_episode = 0
         self._internal_episodes = 0
 
+        self.args = get
+
     @property
     def current_train_episode(self):
         return self._current_train_episode

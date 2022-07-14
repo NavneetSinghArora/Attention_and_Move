@@ -6,11 +6,22 @@ from typing import Tuple, Optional, Sequence
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-from src.core.learning.clip_prediction import get_clip_encoding
-
 from src.core.utils.misc import norm_col_init, weights_init, outer_product, outer_sum
+from src.core.model.object_detection.clip_detection import ClipObjectDetection
 
+import clip
+import torch
+from os.path import join
+import os
+from PIL import Image
+from pathlib import Path
+from clip.simple_tokenizer import SimpleTokenizer
+
+from src.core.utils.constants import PROJECT_ROOT_DIR
+from src.scripts import prepare_dataset
+from src.core.utils.simulator.simulator_variables import SimulatorVariables
+from src.core.utils.properties.global_variables import GlobalVariables
+from src.core.model.object_detection.clip_detection import ClipObjectDetection
 
 def _unfold_communications(speech_per_agent: torch.FloatTensor):
     assert len(speech_per_agent.shape) >= 2
@@ -51,8 +62,22 @@ class Model(nn.Module):
         central_critic: bool = False,
         separate_actor_weights: bool = False,
         final_cnn_channels: int = 64,
+        final_clip_embedding: int = 408
     ):
         super(Model, self).__init__()
+
+        kwargs = {'package_root': str(Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve())}
+        global_variables = GlobalVariables(**kwargs)
+        self.global_properties = global_variables.global_properties
+        self.global_properties['gpu'] = "0"
+        self.global_properties['frozen'] = True
+        self.global_properties['learningrate'] = 0.01
+        self.global_properties['epochs'] = 20
+        self.global_properties['optimiser'] = 'SGD'
+        simulator_variables = SimulatorVariables(self.global_properties)
+        simulator_variables.load_configuration_properties()
+        self.simulator_properties = simulator_variables.simulator_properties
+
         self.num_outputs = sum(len(x) for x in action_groups)
 
         self.turn_off_communication = turn_off_communication
@@ -124,8 +149,14 @@ class Model(nn.Module):
         )
 
         # LSTM
+        # self.lstm = nn.LSTM(
+        #     final_cnn_channels * 4 * 4 + agent_num_embed_length,
+        #     state_repr_length,
+        #     batch_first=True,
+        # )
+
         self.lstm = nn.LSTM(
-            final_cnn_channels * 4 * 4 + agent_num_embed_length,
+            final_clip_embedding + agent_num_embed_length,
             state_repr_length,
             batch_first=True,
         )
@@ -228,7 +259,7 @@ class Model(nn.Module):
         hidden: Optional[torch.FloatTensor],
         agent_rotations: Sequence[int],
     ):
-        if inputs.shape != (self.num_agents, self.num_inputs_per_agent, 84, 84):
+        if inputs.shape != (self.num_agents, self.num_inputs_per_agent, 224, 224):
             raise Exception("input to model is not as expected, check!")
 
         # x = self.cnn(inputs)
@@ -236,27 +267,28 @@ class Model(nn.Module):
         # x.shape == (2, 128, 2, 2)
 
 
-        x = get_clip_encoding(inputs)
-        print(x.shape, '----1')  #
+        # x = get_clip_encoding(inputs)
+        x = ClipObjectDetection(self.global_properties, self.simulator_properties).get_encoding(inputs)
+        # print(x.shape, '----1')
         # x.shape == (2, 64, 4, 4)
 
         x = x.view(x.size(0), -1)
-        print(x.shape, '----2')
+        # print(x.shape, '----2')
         # x.shape = [num_agents, 512]
 
         x = torch.cat((x, self.agent_num_embeddings), dim=1)
-        print(x.shape, '----3')
+        # print(x.shape, '----3')
         # x.shape = [num_agents, 512 + agent_num_embed_length]
 
         x, hidden = self.lstm(x.unsqueeze(1), hidden)
-        print(x.shape, '----4')
+        # print(x.shape, '----4')
 
         # x.shape = [num_agents, 1, state_repr_length]
         # hidden[0].shape == [1, num_agents, state_repr_length]
         # hidden[1].shape == [1, num_agents, state_repr_length]
 
         x = x.squeeze(1)
-        print(x.shape, '----6')
+        # print(x.shape, '----6')
         # x.shape = [num_agents, state_repr_length]
 
         talk_logits = self.talk_symbol_classifier(x)

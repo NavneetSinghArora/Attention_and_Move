@@ -45,7 +45,7 @@ class MultiAgent(RLAgent):
         self.include_depth_frame = include_depth_frame
         self.huber_delta = huber_delta
         self.discourage_failed_coordination = discourage_failed_coordination
-        self.resize_image_as = resize_image_as
+        self.resize_image_as = 224
 
         self.log_prob_of_actions: List[Tuple[torch.FloatTensor]] = []
         self.entropy_per_agent: List[Optional[Tuple[torch.FloatTensor, ...]]] = []
