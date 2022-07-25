@@ -1,5 +1,5 @@
 """
-This file fetches the properties from 'configuration.properties' and returns them.
+This file fetches the properties from 'runtime_args.properties' and returns them.
 These are the system-wide properties loaded only once in the entire project.
 """
 

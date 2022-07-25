@@ -19,8 +19,7 @@ class LoadProperties:
         """
         self.configs = Properties()
         self.simulator_properties = {}
-        # self.property_file = join(PROJECT_ROOT_DIR, global_properties['simulator_configurations'])
-        self.property_file = join(PROJECT_ROOT_DIR, 'resources/simulator/configuration.properties')
+        self.property_file = join(PROJECT_ROOT_DIR, global_properties['simulator_configurations'])
 
     def fetch_properties(self):
         """

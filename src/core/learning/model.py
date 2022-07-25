@@ -99,10 +99,9 @@ class Model(nn.Module):
 
         runtime_variables = RuntimeVariables(**kwargs)
         self.runtime_properties = runtime_variables.runtime_properties
-        # input to conv is (num_agents, self.num_inputs_per_agent, 84, 84)
-        print('Num of agents', num_agents)
 
         if self.runtime_properties['image_features'] == 'CNN':
+            # input to conv is (num_agents, self.num_inputs_per_agent, 84, 84)
             self.cnn = nn.Sequential(
                 OrderedDict(
                     [
