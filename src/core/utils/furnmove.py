@@ -81,7 +81,7 @@ def step_results_to_data_to_save_for_furnlift_experiment(
     return info
 
 
-class SaveFurnLiftMixin(object):
+class SaveFurLiftMixin(object):
     def simple_name(self):
         raise NotImplementedError()
 

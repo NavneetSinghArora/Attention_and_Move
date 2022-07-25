@@ -32,4 +32,7 @@ def parse_arguments():
     parser.add_argument("--test_gpu_ids", type=int, default=None, nargs="+", help="GPUs to use for test agents [-1 CPU only]. (default: -1)")
     parser.add_argument("--use_episode_init_queue", type=str2bool, default=False, help="If True, attempts to use the episode init queue. This is necessary when evaluating models on fixed datasets. Search this codebase for the `create_episode_init_queue` for more information. (default: False)")
     parser.add_argument("--save_extra_data", type=str2bool, default=False, help="If true, attempt to save extra data from train processes. (default: False)")
+    parser.add_argument("--static_scene_type", type=str2bool, default=False, help="Provide value as True or False. In static scenes, the position for target object doesn't change.")
+    parser.add_argument("--image_features", type=str, default='CNN', help="Provide value as CNN or CLIP for generating different image features")
+    parser.add_argument("--text_features", type=str2bool, default=False, help="Provide value as True or False for including the textual features. This property is only valid for CLIP image features")
     return parser.parse_args()

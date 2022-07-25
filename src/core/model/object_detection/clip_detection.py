@@ -61,7 +61,7 @@ def get_object_found_percentage(similarity, object_classes):
 
 class ClipObjectDetection:
     def __init__(self, global_properties, simulator_properties):
-        self.object_classes = None
+        self.object_classes = simulator_properties['object_classes']
         self.best_validation_loss = None
         self.scheduler = None
         self.optimiser = None
@@ -410,3 +410,14 @@ class ClipObjectDetection:
             self.save_best_checkpoint(epoch, validation_loss)
 
         self.test(testing_dataloader)
+
+    def get_encoding(self, images, use_text_features=False):
+        with torch.no_grad():
+            images_features = self.model.encode_image(images.to(self.device))
+            if use_text_features == 'True':
+                text = torch.cat([self.tokenize(c) for c in self.object_classes]).to(self.device)
+                texts_features = self.model.encode_text(text.to(self.device))
+        if use_text_features == 'True':
+            return images_features @ texts_features.T
+        else:
+            return images_features

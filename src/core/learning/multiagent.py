@@ -1,5 +1,6 @@
 import random
 import numpy as np
+from pathlib import Path
 import torch
 import torch.nn.functional as F
 
@@ -9,6 +10,7 @@ from typing import Tuple, Dict, Union, Optional, List, Any, Sequence
 import src.core.utils.net as net
 from src.core.learning.episode import Episode
 from src.core.learning.agent import EnvType, RLAgent, A3CAgent
+from src.core.utils.runtime.runtime_variables import RuntimeVariables
 from src.core.utils.misc import (
     log_sum_exp,
     outer_product,
@@ -39,14 +41,22 @@ class MultiAgent(RLAgent):
     ) -> None:
         super().__init__(model=model, episode=episode, gpu_id=gpu_id, **kwargs)
 
+        kwargs = {
+            'package_root': str(Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve())}
+        runtime_variables = RuntimeVariables(**kwargs)
+        self.runtime_variables = runtime_variables.runtime_properties
+
+        if self.runtime_variables['image_features'] == 'CLIP':
+            self.resize_image_as = 224
+        else:
+            self.resize_image_as = resize_image_as
+
         self.last_reward_per_agent: Optional[Tuple[float, ...]] = None
         self.include_test_eval_results = include_test_eval_results or record_all_in_test
         self.record_all_in_test = record_all_in_test
         self.include_depth_frame = include_depth_frame
         self.huber_delta = huber_delta
         self.discourage_failed_coordination = discourage_failed_coordination
-        self.resize_image_as = resize_image_as
-
         self.log_prob_of_actions: List[Tuple[torch.FloatTensor]] = []
         self.entropy_per_agent: List[Optional[Tuple[torch.FloatTensor, ...]]] = []
         self.rewards_per_agent: List[Tuple[float, ...]] = []

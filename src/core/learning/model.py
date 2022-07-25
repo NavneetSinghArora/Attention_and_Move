@@ -6,9 +6,23 @@ from typing import Tuple, Optional, Sequence
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from src.core.utils.misc import norm_col_init, weights_init, outer_product, outer_sum
+from src.core.model.object_detection.clip_detection import ClipObjectDetection
 
+import clip
+import torch
+from os.path import join
+import os
+from PIL import Image
+from pathlib import Path
+from clip.simple_tokenizer import SimpleTokenizer
+
+from src.core.utils.constants import PROJECT_ROOT_DIR
+from src.scripts import prepare_dataset
+from src.core.utils.simulator.simulator_variables import SimulatorVariables
+from src.core.utils.properties.global_variables import GlobalVariables
+from src.core.utils.runtime.runtime_variables import RuntimeVariables
+from src.core.model.object_detection.clip_detection import ClipObjectDetection
 
 def _unfold_communications(speech_per_agent: torch.FloatTensor):
     assert len(speech_per_agent.shape) >= 2
@@ -49,8 +63,23 @@ class Model(nn.Module):
         central_critic: bool = False,
         separate_actor_weights: bool = False,
         final_cnn_channels: int = 64,
+        final_clip_embedding: int = 408,
+        final_clip_embedding_without_text: int = 512
     ):
         super(Model, self).__init__()
+
+        kwargs = {'package_root': str(Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve())}
+        global_variables = GlobalVariables(**kwargs)
+        self.global_properties = global_variables.global_properties
+        self.global_properties['gpu'] = "0"
+        self.global_properties['frozen'] = True
+        self.global_properties['learningrate'] = 0.01
+        self.global_properties['epochs'] = 20
+        self.global_properties['optimiser'] = 'SGD'
+        simulator_variables = SimulatorVariables(self.global_properties)
+        simulator_variables.load_configuration_properties()
+        self.simulator_properties = simulator_variables.simulator_properties
+
         self.num_outputs = sum(len(x) for x in action_groups)
 
         self.turn_off_communication = turn_off_communication
@@ -68,37 +97,49 @@ class Model(nn.Module):
 
         self.coordinate_actions = coordinate_actions
 
-        # input to conv is (num_agents, self.num_inputs_per_agent, 84, 84)
-        self.cnn = nn.Sequential(
-            OrderedDict(
-                [
-                    (
-                        "conv1",
-                        nn.Conv2d(
-                            self.num_inputs_per_agent, 32, 5, stride=1, padding=2
+        runtime_variables = RuntimeVariables(**kwargs)
+        self.runtime_properties = runtime_variables.runtime_properties
+
+        if self.runtime_properties['image_features'] == 'CNN':
+            # input to conv is (num_agents, self.num_inputs_per_agent, 84, 84)
+            self.cnn = nn.Sequential(
+                OrderedDict(
+                    [
+                        # shape = 3x84x84
+                        (
+                            "conv1",
+                            nn.Conv2d(
+                                self.num_inputs_per_agent, 32, 5, stride=1, padding=2
+                            ),
                         ),
-                    ),
-                    ("maxpool1", nn.MaxPool2d(2, 2)),
-                    ("relu1", nn.ReLU(inplace=True)),
-                    # shape =
-                    ("conv2", nn.Conv2d(32, 32, 5, stride=1, padding=1)),
-                    ("maxpool2", nn.MaxPool2d(2, 2)),
-                    ("relu2", nn.ReLU(inplace=True)),
-                    # shape =
-                    ("conv3", nn.Conv2d(32, 64, 4, stride=1, padding=1)),
-                    ("maxpool3", nn.MaxPool2d(2, 2)),
-                    ("relu3", nn.ReLU(inplace=True)),
-                    # shape =
-                    (
-                        "conv4",
-                        nn.Conv2d(64, final_cnn_channels, 3, stride=1, padding=1),
-                    ),
-                    ("maxpool4", nn.MaxPool2d(2, 2)),
-                    ("relu4", nn.ReLU(inplace=True)),
-                    # shape = (4, 4)
-                ]
+                        # shape = 32x84x84
+                        ("maxpool1", nn.MaxPool2d(2, 2)),
+                        ("relu1", nn.ReLU(inplace=True)),
+                        # shape = 32x42x42
+                        ("conv2", nn.Conv2d(32, 32, 5, stride=1, padding=1)),
+                        # shape = 32x40x40
+                        ("maxpool2", nn.MaxPool2d(2, 2)),
+                        # shape = 32x20x20
+                        ("relu2", nn.ReLU(inplace=True)),
+                        # shape = 32x20x20
+                        ("conv3", nn.Conv2d(32, 64, 4, stride=1, padding=1)),
+                        # shape = 64x19x19
+                        ("maxpool3", nn.MaxPool2d(2, 2)),
+                        # shape = 64x9x9
+                        ("relu3", nn.ReLU(inplace=True)),
+                        # shape = 64x9x9
+                        (
+                            "conv4",
+                            nn.Conv2d(64, final_cnn_channels, 3, stride=1, padding=1),
+                        ),
+                        # shape = 64x9x9
+                        ("maxpool4", nn.MaxPool2d(2, 2)),
+                        # shape = 64x4x4
+                        ("relu4", nn.ReLU(inplace=True)),
+                        # shape = (4, 4)
+                    ]
+                )
             )
-        )
 
         # Vocab embed
         self.talk_embeddings = nn.Embedding(num_talk_symbols, talk_embed_length)
@@ -107,17 +148,31 @@ class Model(nn.Module):
         self.talk_symbol_classifier = nn.Linear(state_repr_length, num_talk_symbols)
         self.reply_symbol_classifier = nn.Linear(state_repr_length, num_reply_symbols)
 
-        # Agent embed
+        # Agent embed (MLP)
         self.agent_num_embeddings = nn.Parameter(
             torch.rand(self.num_agents, agent_num_embed_length)
         )
 
         # LSTM
-        self.lstm = nn.LSTM(
-            final_cnn_channels * 4 * 4 + agent_num_embed_length,
-            state_repr_length,
-            batch_first=True,
-        )
+        if self.runtime_properties['image_features'] == 'CLIP':
+            if self.runtime_properties['text_features'] == 'True':
+                self.lstm = nn.LSTM(
+                    final_clip_embedding + agent_num_embed_length,
+                    state_repr_length,
+                    batch_first=True,
+                )
+            else:
+                self.lstm = nn.LSTM(
+                    final_clip_embedding_without_text + agent_num_embed_length,
+                    state_repr_length,
+                    batch_first=True,
+                )
+        else:
+            self.lstm = nn.LSTM(
+                final_cnn_channels * 4 * 4 + agent_num_embed_length,
+                state_repr_length,
+                batch_first=True,
+            )
 
         # Belief update MLP
         state_and_talk_rep_len = state_repr_length + talk_embed_length * (
@@ -194,11 +249,13 @@ class Model(nn.Module):
 
         # Setting initial weights
         self.apply(weights_init)
-        relu_gain = nn.init.calculate_gain("relu")
-        self.cnn._modules["conv1"].weight.data.mul_(relu_gain)
-        self.cnn._modules["conv2"].weight.data.mul_(relu_gain)
-        self.cnn._modules["conv3"].weight.data.mul_(relu_gain)
-        self.cnn._modules["conv4"].weight.data.mul_(relu_gain)
+
+        if self.runtime_properties['image_features'] == 'CNN':
+            relu_gain = nn.init.calculate_gain("relu")
+            self.cnn._modules["conv1"].weight.data.mul_(relu_gain)
+            self.cnn._modules["conv2"].weight.data.mul_(relu_gain)
+            self.cnn._modules["conv3"].weight.data.mul_(relu_gain)
+            self.cnn._modules["conv4"].weight.data.mul_(relu_gain)
 
         self.talk_symbol_classifier.weight.data = norm_col_init(
             self.talk_symbol_classifier.weight.data, 0.01
@@ -217,32 +274,28 @@ class Model(nn.Module):
         hidden: Optional[torch.FloatTensor],
         agent_rotations: Sequence[int],
     ):
-        if inputs.shape != (self.num_agents, self.num_inputs_per_agent, 84, 84):
-            raise Exception("input to model is not as expected, check!")
 
-        x = self.cnn(inputs)
-        # x.shape == (2, 128, 2, 2)
+        if self.runtime_properties['image_features'] == 'CLIP':
+            if inputs.shape != (self.num_agents, self.num_inputs_per_agent, 224, 224):
+                raise Exception("input to model is not as expected, check!")
+            x = \
+                ClipObjectDetection(self.global_properties,
+                                    self.simulator_properties).get_encoding(inputs,
+                                                                            self.runtime_properties['text_features'])
+        else:
+            if inputs.shape != (self.num_agents, self.num_inputs_per_agent, 84, 84):
+                raise Exception("input to model is not as expected, check!")
+            x = self.cnn(inputs)
 
         x = x.view(x.size(0), -1)
-        # x.shape = [num_agents, 512]
-
         x = torch.cat((x, self.agent_num_embeddings), dim=1)
-        # x.shape = [num_agents, 512 + agent_num_embed_length]
-
         x, hidden = self.lstm(x.unsqueeze(1), hidden)
-        # x.shape = [num_agents, 1, state_repr_length]
-        # hidden[0].shape == [1, num_agents, state_repr_length]
-        # hidden[1].shape == [1, num_agents, state_repr_length]
-
         x = x.squeeze(1)
-        # x.shape = [num_agents, state_repr_length]
 
         talk_logits = self.talk_symbol_classifier(x)
         talk_probs = F.softmax(talk_logits, dim=1)
-        # talk_probs.shape = [num_agents, num_talk_symbols]
 
         talk_outputs = torch.mm(talk_probs, self.talk_embeddings.weight)
-        # talk_outputs.shape = [num_agents, talk_embed_length]
 
         if not self.turn_off_communication:
             talk_heard_per_agent = _unfold_communications(talk_outputs)
