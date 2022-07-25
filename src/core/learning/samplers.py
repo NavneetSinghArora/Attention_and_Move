@@ -6,6 +6,7 @@ import networkx as nx
 import numpy as np
 import torch
 import sys
+from pathlib import Path
 
 from ai2thor.platform import CloudRendering, Linux64, OSXIntel64    # needed in order to select with getattr(sys.modules[__name__], ...)
 from networkx import find_cliques
@@ -21,6 +22,7 @@ from src.core.services.viewer import Viewer
 from src.core.utils.sampler import create_environment, save_talk_reply_data_frame
 from src.core.utils.ai2thor import manhattan_dists_between_positions
 from src.core.utils.multiagent import TrainingCompleteException
+from src.core.utils.runtime.runtime_variables import RuntimeVariables
 
 
 class FurnLiftEpisodeSamplers(object):
@@ -67,7 +69,10 @@ class FurnLiftEpisodeSamplers(object):
         self._current_train_episode = 0
         self._internal_episodes = 0
 
-        self.args = get
+        kwargs = {
+            'package_root': str(Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve())}
+        runtime_variables = RuntimeVariables(**kwargs)
+        self.runtime_properties = runtime_variables.runtime_properties
 
     @property
     def current_train_episode(self):
@@ -283,29 +288,29 @@ class FurnLiftEpisodeSamplers(object):
             scene_successfully_setup = False
             failure_reasons = []
             for _ in range(10):
+                if self.runtime_properties['static_scene_type'] == 'False':
+                    env.step(
+                        {
+                            "action": "DisableAllObjectsOfType",
+                            "objectId": self.object_type,
+                            "agentId": 0,
+                        }
+                    )
 
-                env.step(
-                    {
-                        "action": "DisableAllObjectsOfType",
-                        "objectId": self.object_type,
-                        "agentId": 0,
-                    }
-                )
-
-                # CHANGE: instead get Television and disable by using action "DisableObject"
-                objects_of_type = env.all_objects_with_properties(
-                    {"objectType": self.object_type}, agent_id=0
-                )
-                if len(objects_of_type) != 1:
-                    print("len(objects_of_type): {}".format(len(objects_of_type)))
-                    raise (Exception("len(objects_of_type) != 1"))
-                env.step(
-                    {
-                        "action": "DisableObject",
-                        "objectId": objects_of_type[0]["objectId"],
-                        "agentId": 0,
-                    }
-                )
+                    # CHANGE: instead get Television and disable by using action "DisableObject"
+                    objects_of_type = env.all_objects_with_properties(
+                        {"objectType": self.object_type}, agent_id=0
+                    )
+                    if len(objects_of_type) != 1:
+                        print("len(objects_of_type): {}".format(len(objects_of_type)))
+                        raise (Exception("len(objects_of_type) != 1"))
+                    env.step(
+                        {
+                            "action": "DisableObject",
+                            "objectId": objects_of_type[0]["objectId"],
+                            "agentId": 0,
+                        }
+                    )
 
                 for agent_id in range(self.num_agents):
                     env.randomize_agent_location(
@@ -316,16 +321,20 @@ class FurnLiftEpisodeSamplers(object):
                         partial_position={"horizon": 0},
                         only_initially_reachable=True,
                     )
+                if self.runtime_properties['static_scene_type'] == 'False':
+                    env.step(
+                        {
+                            "action": "RandomlyCreateAndPlaceObjectOnFloor",
+                            "objectType": self.object_type,
+                            "agentId": 0,
+                        }
+                    )
 
-                env.step(
-                    {
-                        "action": "RandomlyCreateAndPlaceObjectOnFloor",
-                        "objectType": self.object_type,
-                        "agentId": 0,
-                    }
-                )
+                    if env.last_event.metadata["lastAction"] != "RandomlyCreateAndPlaceObjectOnFloor" or not env.last_event.metadata["lastActionSuccess"]:
+                        failure_reasons.append("Could not randomize location of {}.".format(self.object_type, scene))
+                        continue
 
-                if env.last_event.metadata["lastAction"] != "RandomlyCreateAndPlaceObjectOnFloor" or not env.last_event.metadata["lastActionSuccess"]:
+                if not env.last_event.metadata["lastActionSuccess"]:
                     failure_reasons.append("Could not randomize location of {}.".format(self.object_type, scene))
                     continue
 

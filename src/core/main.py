@@ -10,6 +10,7 @@ import signal
 import sys
 import time
 import warnings
+import json
 
 import numpy as np
 import torch
@@ -30,6 +31,7 @@ from src.core.utils.net import (
     load_model_from_state_dict,
     TensorConcatTracker,
 )
+from src.core.utils.constants import PROJECT_ROOT_DIR
 
 np.set_printoptions(threshold=10000000, suppress=True, linewidth=100000)
 
@@ -38,7 +40,30 @@ os.environ["OMP_NUM_THREADS"] = "1"
 
 if __name__ == "__main__":
 
+    metrics_to_record = {
+        'train': {
+            'ep_length': [],
+            'accuracy': [],
+            'pickupable_but_not_picked': [],
+            'picked_but_not_pickupable': [],
+            'reward': [],
+            'dist_to_low_rank': [],
+            'invalid_prob_mass': []
+        },
+        'valid': {
+            'ep_length': [],
+            'accuracy': [],
+            'pickupable_but_not_picked': [],
+            'picked_but_not_pickupable': [],
+            'reward': []
+        }
+    }
+
     args = parse_arguments()
+    with open(os.path.join(PROJECT_ROOT_DIR, 'resources/project/runtime_args.properties'), 'w+', encoding='utf-8') as f:
+        f.write('%s=%s\n' % ('runtime_configurations', 'resources/project/runtime_args.properties'))
+        for key, value in vars(args).items():
+            f.write('%s=%s\n' % (key, value))
 
     experiment = get_experiment()
     experiment.init_train_agent.env_args = args
@@ -220,6 +245,20 @@ if __name__ == "__main__":
                     train_total_ep.value += 1
                     n_frames += ep_length
 
+                    # Saving metrics to json file for analysis purpose
+                    if train_total_ep.value % args.save_freq == 0:
+                        metrics_to_record['train']['ep_length'].append([train_total_ep.value, ep_length])
+                        metrics_to_record['train']['accuracy'].append([train_total_ep.value, train_result['accuracy']])
+                        metrics_to_record['train']['pickupable_but_not_picked'].append(
+                            [train_total_ep.value, train_result['pickupable_but_not_picked']])
+                        metrics_to_record['train']['picked_but_not_pickupable'].append(
+                            [train_total_ep.value, train_result['picked_but_not_pickupable']])
+                        metrics_to_record['train']['reward'].append([train_total_ep.value, train_result['reward']])
+                        metrics_to_record['train']['dist_to_low_rank'].append(
+                            [train_total_ep.value, train_result['dist_to_low_rank']])
+                        metrics_to_record['train']['invalid_prob_mass'].append(
+                            [train_total_ep.value, train_result['invalid_prob_mass']])
+
                     if args.enable_logging and train_total_ep.value % train_thin == 0:
                         tracked_means = train_scalars.pop_and_reset()
                         for k in tracked_means:
@@ -245,6 +284,17 @@ if __name__ == "__main__":
                         valid_result = valid_res_queue.get()
                         if len(valid_result) == 0:
                             continue
+
+                        if valid_total_ep.value % args.save_freq == 0:
+                            metrics_to_record['valid']['ep_length'].append([valid_total_ep.value, ep_length])
+                            metrics_to_record['valid']['accuracy'].append(
+                                [valid_total_ep.value, valid_result['accuracy']])
+                            metrics_to_record['valid']['pickupable_but_not_picked'].append(
+                                [valid_total_ep.value, valid_result['pickupable_but_not_picked']])
+                            metrics_to_record['valid']['picked_but_not_pickupable'].append(
+                                [valid_total_ep.value, valid_result['picked_but_not_pickupable']])
+                            metrics_to_record['valid']['reward'].append([valid_total_ep.value, valid_result['reward']])
+
                         key = list(valid_result.keys())[0].split("/")[0]
                         valid_total_ep.value += 1
                         if valid_total_ep.value % valid_thin == 0:
@@ -313,6 +363,11 @@ if __name__ == "__main__":
             "Reached max episodes: {}".format(train_total_ep.value >= args.max_ep),
             flush=True,
         )
+
+        with open(os.path.join(PROJECT_ROOT_DIR,
+                               'src/core/output/json_logs/train_valid_metrics_as_json_' + str(time.time()) + '.json'), 'w+',
+                  encoding='UTF-8') as f:
+            f.write(json.dumps(metrics_to_record))
 
         if args.enable_logging:
             log_writer.close()

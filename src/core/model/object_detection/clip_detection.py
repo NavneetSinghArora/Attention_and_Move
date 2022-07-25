@@ -411,12 +411,13 @@ class ClipObjectDetection:
 
         self.test(testing_dataloader)
 
-    def get_encoding(self, images):
+    def get_encoding(self, images, use_text_features=False):
         with torch.no_grad():
             images_features = self.model.encode_image(images.to(self.device))
-            text = torch.cat([self.tokenize(c) for c in self.object_classes]).to(self.device)
-            texts_features = self.model.encode_text(text.to(self.device))
-
-        features = (images_features @ texts_features.T)
-
-        return features
+            if use_text_features == 'True':
+                text = torch.cat([self.tokenize(c) for c in self.object_classes]).to(self.device)
+                texts_features = self.model.encode_text(text.to(self.device))
+        if use_text_features == 'True':
+            return images_features @ texts_features.T
+        else:
+            return images_features
