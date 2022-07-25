@@ -380,7 +380,3 @@ class Model(nn.Module):
             to_return["logit_all"] = self.actor_linear(state_talk_reply_repr)
 
         return to_return
-
-
-# def predict_clip_cs(inputs):
-#     predict_clip(..)
