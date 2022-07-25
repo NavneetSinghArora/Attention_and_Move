@@ -58,7 +58,8 @@ if __name__ == "__main__":
             'reward': []
         }
     }
-
+    max_accuracy = 0
+    save_best = False
     args = parse_arguments()
     with open(os.path.join(PROJECT_ROOT_DIR, 'resources/project/runtime_args.properties'), 'w+', encoding='utf-8') as f:
         f.write('%s=%s\n' % ('runtime_configurations', 'resources/project/runtime_args.properties'))
@@ -259,6 +260,12 @@ if __name__ == "__main__":
                         metrics_to_record['train']['invalid_prob_mass'].append(
                             [train_total_ep.value, train_result['invalid_prob_mass']])
 
+                    if train_total_ep.value > 10000:
+                        old_max_accuracy = max_accuracy
+                        max_accuracy = max(max_accuracy, train_result['accuracy'])
+                        if old_max_accuracy != max_accuracy:
+                            save_best = True
+
                     if args.enable_logging and train_total_ep.value % train_thin == 0:
                         tracked_means = train_scalars.pop_and_reset()
                         for k in tracked_means:
@@ -325,18 +332,28 @@ if __name__ == "__main__":
                 # Checkpoints
                 if (
                     train_total_ep.value == args.max_ep
-                    or (train_total_ep.value % args.save_freq) == 0
+                    or (train_total_ep.value % args.save_freq) == 0 or save_best
                 ):
                     if not os.path.exists(args.checkpoints_dir):
                         os.makedirs(args.checkpoints_dir, exist_ok=True)
 
                     state_to_save = shared_model.state_dict()
-                    save_path = os.path.join(
-                        args.checkpoints_dir,
-                        "{}_{}.dat".format(
-                            train_total_ep.value, local_start_time_str
-                        ),
-                    )
+
+                    if save_best:
+                        save_path = os.path.join(
+                            args.checkpoints_dir,
+                            "best_{}_{}.dat".format(
+                                train_total_ep.value, local_start_time_str
+                            ),
+                        )
+                        save_best = False
+                    else:
+                        save_path = os.path.join(
+                            args.checkpoints_dir,
+                            "{}_{}.dat".format(
+                                train_total_ep.value, local_start_time_str
+                            ),
+                        )
                     torch.save(
                         {
                             "model_state": shared_model.state_dict(),
