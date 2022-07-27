@@ -38,8 +38,8 @@ class FurnLiftBaseConfig(ExperimentConfig, ABC):
     # Training config
     max_ep_using_expert_actions = 10000
     dagger_mode = True
-    train_scenes = CONSTANTS.TRAIN_SCENE_NAMES[20:40]
-    valid_scenes = CONSTANTS.VALID_SCENE_NAMES[5:10]
+    train_scenes = CONSTANTS.TRAIN_SCENE_NAMES
+    valid_scenes = CONSTANTS.VALID_SCENE_NAMES
     use_a3c_loss_when_not_expert_forcing = True
 
     # Misc (e.g. visualization)
