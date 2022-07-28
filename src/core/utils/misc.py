@@ -193,12 +193,25 @@ def save_project_state_in_log(
     local_start_time_str,
     checkpoints_dir,
     use_checkpoint,
-    log_dir: str = "output/logs/"
+    image_features,
+    text_features,
+    static_scene_type,
+    log_dir: str = "output/logs/",
 ):
     short_sha = (
         subprocess.check_output(["git", "describe", "--always"]).strip().decode("utf-8")
     )
-    log_file_path = os.path.join(log_dir, local_start_time_str)
+    if text_features:
+        cur_model_text = "with_text"
+    else:
+        cur_model_text = "without_text"
+    if static_scene_type:
+        cur_scene_type = "static"
+    else:
+        cur_scene_type = "dynamic"
+
+    filename = image_features+"_"+cur_model_text+"_"+cur_scene_type+"_"+local_start_time_str
+    log_file_path = os.path.join(log_dir, filename)
     diff_path = os.path.join(log_file_path, "git-diff.txt")
     sha_path = os.path.join(log_file_path, "sha.txt")
     if not os.path.exists(log_file_path):
