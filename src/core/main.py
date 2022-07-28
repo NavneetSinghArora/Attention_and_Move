@@ -96,21 +96,14 @@ if __name__ == "__main__":
 
     if args.enable_logging:
         # Caching current state of the project
-        cur_model_img = args.image_features
-        if args.text_features:
-            cur_model_text = "with_text"
-        else:
-            cur_model_text = "without_text"
-        if args.static_scene_type:
-            cur_scene_type = "static"
-        else:
-            cur_scene_type = "dynamic"
-
         log_file_path = save_project_state_in_log(sys.argv,
-            cur_model_img,
-            cur_model_text,
-            cur_scene_type,
-            local_start_time_str
+            local_start_time_str,
+            experiment.checkpoints_dir,
+            experiment.use_checkpoint,
+            args.image_features,
+            args.text_features,
+            args.static_scene_type,
+            args.log_dir
         )
         # Create a tensorboard logger
         log_writer = SummaryWriter(log_file_path)
