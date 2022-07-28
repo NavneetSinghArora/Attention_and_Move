@@ -99,6 +99,7 @@ class Model(nn.Module):
 
         runtime_variables = RuntimeVariables(**kwargs)
         self.runtime_properties = runtime_variables.runtime_properties
+        self.global_properties['gpu'] = str(self.runtime_properties['gpu_ids'][0])
 
         if self.runtime_properties['image_features'] == 'CNN':
             # input to conv is (num_agents, self.num_inputs_per_agent, 84, 84)
