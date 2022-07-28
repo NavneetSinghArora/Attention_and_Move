@@ -40,7 +40,8 @@ os.environ["OMP_NUM_THREADS"] = "1"
 
 
 if __name__ == "__main__":
-
+    training_start_time = time.time()
+    
     metrics_to_record = {
         'train': {
             'ep_length': [],
@@ -533,4 +534,8 @@ if __name__ == "__main__":
             end_time = time.time()
             local_end_time_str = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime(end_time))
             print(local_start_time_str + " > " + local_end_time_str)
+            training_final_time = time.time()
+            hours, rem = divmod(training_final_time - training_start_time, 3600)
+            minutes, seconds = divmod(rem, 60)
+            print("Time for Processing ->  {:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds))
             print("All done.", flush=True)
