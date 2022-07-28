@@ -30,14 +30,14 @@ np.set_printoptions(linewidth=1000)
 warnings.simplefilter("always", UserWarning)
 
 
-def test(
-        args,
-        shared_model: nn.Module,
-        experiment: ExperimentConfig,
-        res_queue: mp.Queue,
-        end_flag: mp.Value,
-        worker_num: Optional[int] = None,
-        num_test_workers: Optional[int] = None,
+def valid(
+    args,
+    shared_model: nn.Module,
+    experiment: ExperimentConfig,
+    res_queue: mp.Queue,
+    end_flag: mp.Value,
+    worker_num: Optional[int] = None,
+    num_test_workers: Optional[int] = None,
 ) -> None:
     if worker_num is not None:
         ptitle("Test Agent {}".format(worker_num))
@@ -59,8 +59,8 @@ def test(
     if gpu_id >= 0:
         torch.cuda.manual_seed(args.seed)
 
-    if "set_worker_num" in dir(experiment.init_test_agent):
-        experiment.init_test_agent.set_worker_num(
+    if "set_worker_num" in dir(experiment.init_valid_agent):
+        experiment.init_valid_agent.set_worker_num(
             worker_num=worker_num, total_workers=num_test_workers
         )
 
@@ -80,7 +80,7 @@ def test(
             agent.sync_with_shared(shared_model)
 
             while True:
-                agent_iterator = experiment.init_test_agent(agent=agent)
+                agent_iterator = experiment.init_valid_agent(agent=agent)
                 try:
                     next(agent_iterator)
                     break
@@ -134,17 +134,17 @@ def test(
             if last_losses is not None:
                 info = {**info, **last_losses}
             if (
-                    len(agent.eval_results) > 0
-                    and "additional_metrics" in agent.eval_results[0]
+                len(agent.eval_results) > 0
+                and "additional_metrics" in agent.eval_results[0]
             ):
                 for a_metric in agent.eval_results[0]["additional_metrics"]:
                     info[a_metric] = (
-                            1.0
-                            / len(agent.eval_results)
-                            * sum(
-                        er["additional_metrics"][a_metric]
-                        for er in agent.eval_results
-                    )
+                        1.0
+                        / len(agent.eval_results)
+                        * sum(
+                            er["additional_metrics"][a_metric]
+                            for er in agent.eval_results
+                        )
                     )
             res_queue.put({k: info[k] for k in info})
 
@@ -159,7 +159,7 @@ def test(
                 for i in range(num_agents if not using_central_agent else 1):
                     verbose_string = "\nAGENT {}".format(i)
                     for x in sorted(
-                            res_sample + [last_episode_data], key=lambda y: y["iter"]
+                        res_sample + [last_episode_data], key=lambda y: y["iter"]
                     ):
                         # TODO: Currently marginalizing to only show the first two agents.
                         #   As things become quickly messy. Is there a nice way to visualize
@@ -182,15 +182,15 @@ def test(
                             suppress_small=True,
                         )
                         if (
-                                len(x["probs_per_agent"][i].squeeze().shape) == 1
-                                and not using_central_agent
+                            len(x["probs_per_agent"][i].squeeze().shape) == 1
+                            and not using_central_agent
                         ):
                             probs_split = probs_str.split(" ")
                             if len(probs_split) > 10:
                                 probs_split = (
-                                        probs_split[0:5]
-                                        + ["(..{}..)".format(len(probs_split) - 10)]
-                                        + probs_split[-5:]
+                                    probs_split[0:5]
+                                    + ["(..{}..)".format(len(probs_split) - 10)]
+                                    + probs_split[-5:]
                                 )
                             probs_str = " ".join(probs_split)
                         else:
@@ -207,12 +207,11 @@ def test(
                 res_sampler = debug.ReservoirSampler(3)
 
         except EndProcessException as _:
-            print("End process signal received in test worker. Quitting...", flush=True)
+            print("End process signal received in valid worker. Quitting...", flush=True)
             sys.exit()
-
+        
         except (RuntimeError, ValueError, networkx.exception.NetworkXNoPath) as e:
-            print(
-                "RuntimeError, ValueError, or networkx exception when training, attempting to print traceback, print metadata, and reset.")
+            print("RuntimeError, ValueError, or networkx exception when training, attempting to print traceback, print metadata, and reset.")
             print("-" * 60)
             traceback.print_exc(file=sys.stdout)
             print("-" * 60)

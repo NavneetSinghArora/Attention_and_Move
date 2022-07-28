@@ -5,6 +5,7 @@ import traceback
 import warnings
 from typing import Optional, Dict
 import pickle
+from carbontracker.tracker import CarbonTracker
 
 import networkx
 import torch
@@ -56,10 +57,13 @@ def train(
 
     agent: MultiAgent = experiment.create_agent(model=model, gpu_id=gpu_id)
 
+
+    tracker = CarbonTracker(epochs=args.max_ep, log_dir='/export/home/0usmanov/Desktop/Master/Attention_and_Move/src/core/output/carbon_logs/')
     num_sequential_errors = 0
     while not end_flag.value:
         last_losses: Dict[str, float] = {}
         additional_metrics = {}
+        tracker.epoch_start()
 
         try:
             experiment.init_train_agent.current_train_episode = train_total_ep.value
@@ -160,17 +164,20 @@ def train(
             agent.clear_history()
             agent.repackage_hidden()
             num_sequential_errors = 0
-
+        
         except EndProcessException as _:
             print(f"End process signal received in worker {worker_number}. Quitting...", flush=True)
+            tracker.stop()
             sys.exit()
 
         except TrainingCompleteException as _:
             print(f"Training complete signal received in worker {worker_number}. Closing open files/subprocesses exiting.", flush=True)
             try:
+                tracker.stop()
                 agent.environment.stop()
             except Exception as _:
                 pass
+            tracker.stop()
             sys.exit()
 
         except (RuntimeError, ValueError, networkx.exception.NetworkXNoPath) as e:
@@ -188,3 +195,7 @@ def train(
 
             agent.clear_history()
             agent.repackage_hidden()
+            tracker.stop()
+
+        tracker.epoch_end()
+    tracker.stop()

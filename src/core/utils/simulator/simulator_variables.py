@@ -37,7 +37,7 @@ class SimulatorVariables:
     def create_scenes(self):
         """
         This method creates the different scene names available in iTHOR.
-        These names are then converted to the train/val/test split in the ratio of 20:5:5.
+        These names are then converted to the train/val/valid split in the ratio of 20:5:5.
         """
 
         # kitchens = [f"FloorPlan{i}" for i in range(1, 31)]
