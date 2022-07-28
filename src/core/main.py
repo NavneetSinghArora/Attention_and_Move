@@ -22,8 +22,9 @@ from typing import Optional
 
 from src.core.experiments.config import get_experiment
 from src.core.learning.optimizer import SharedAdam, SharedRMSprop
-from src.core.learning.test import test
+from src.core.learning.valid import valid
 from src.core.learning.train import train
+from src.core.learning.test import test
 from src.core.utils.arguments import parse_arguments
 from src.core.utils.misc import save_project_state_in_log
 from src.core.utils.net import (
@@ -56,6 +57,22 @@ if __name__ == "__main__":
             'pickupable_but_not_picked': [],
             'picked_but_not_pickupable': [],
             'reward': []
+        },
+        'test': {
+            'accuracy': [],
+            'dist_to_low_rank': [],
+            'ep_length': [],
+            'final_manhattan_distance_from_target': [],
+            'initial_manhattan_steps': [],
+            'invalid_prob_mass': [],
+            'loss': [],
+            'n_frames': [],
+            'picked_but_not_pickupable_distance': [],
+            'picked_but_not_pickupable': [],
+            'picked_but_not_pickupable_visibility': [],
+            'pickupable_but_not_picked': [],
+            'reward': [],
+            'spl_manhattan': []
         }
     }
     max_accuracy = 0
@@ -68,6 +85,7 @@ if __name__ == "__main__":
 
     experiment = get_experiment()
     experiment.init_train_agent.env_args = args
+    experiment.init_valid_agent.env_args = args
     experiment.init_test_agent.env_args = args
     experiment.checkpoints_dir = args.checkpoints_dir
     experiment.use_checkpoint = args.use_checkpoint
@@ -164,236 +182,355 @@ if __name__ == "__main__":
 
     processes = []
 
-    end_flag = mp.Value(ctypes.c_bool, False)
-    train_scalars = ScalarMeanTracker()
-    train_tensors = TensorConcatTracker()
-    train_total_ep = mp.Value(
-        ctypes.c_int32, restarted_from_episode if restarted_from_episode else 0
-    )
+    if args.enable_test_agent:
+        average_metrics = {
+            'accuracy': [],
+            'ep_length': [],
+            'pickupable_but_not_picked': [],
+            'picked_but_not_pickupable': [],
+            'reward': []
+        }
 
-    train_res_queue = mp.Queue()
+        # Creating the basic test configuration
+        end_flag = mp.Value(ctypes.c_bool, False)
+        test_res_queue = mp.Queue()
+        test_total_ep = mp.Value(ctypes.c_int32, 0)
+        save_data_queue = None if not args.save_extra_data else mp.Queue()
 
-    save_data_queue = None if not args.save_extra_data else mp.Queue()
-    episode_init_queue = (
-        None
-        if not args.use_episode_init_queue
-        else experiment.create_episode_init_queue(mp_module=mp)
-    )
-
-    if experiment.stopping_criteria_reached():
-        warnings.warn("Stopping criteria reached before any computations started!")
-        print("All done.")
-        sys.exit()
-
-    for rank in range(0, args.workers):
-        train_experiment = copy.deepcopy(experiment)                            # each worker get's his own experiment
-        train_experiment.init_train_agent.seed = random.randint(0, 10 ** 10)
-        p = mp.Process(
-            target=train,
-            args=(
-                rank,
-                args,
-                shared_model,
-                train_experiment,
-                optimizer,
-                train_res_queue,
-                end_flag,
-                train_total_ep,
-                None,  # Update lock
-                save_data_queue,
-                episode_init_queue,
-            ),
-        )
-        p.start()
-        processes.append(p)
-        time.sleep(0.2)
-
-    time.sleep(5)
-
-    valid_res_queue = mp.Queue()
-    valid_total_ep = mp.Value(
-        ctypes.c_int32, restarted_from_episode if restarted_from_episode else 0
-    )
-    if args.enable_val_agent:
+        # Creating the test experiment and the testing process
         test_experiment = copy.deepcopy(experiment)
         p = mp.Process(
             target=test,
-            args=(args, shared_model, test_experiment, valid_res_queue, end_flag, 0, 1),
+            args=(args, shared_model, test_experiment, test_res_queue, end_flag, 0, 1),
         )
+
+        # Starting with the testing scenarios
         p.start()
         processes.append(p)
         time.sleep(0.2)
 
-    time.sleep(1)
-
-    train_thin = 500
-    valid_thin = 1
-    n_frames = 0
-    try:
-        while (
-            (not experiment.stopping_criteria_reached())
-            and any(p.is_alive() for p in processes)
-            and train_total_ep.value < args.max_ep
-        ):
-            try:
-                train_result = train_res_queue.get(timeout=10)
-                if len(train_result) != 0:
-                    train_scalars.add_scalars(train_result)
-                    train_tensors.add_tensors(train_result)
-                    ep_length = sum(
-                        train_result[k] for k in train_result if "ep_length" in k
-                    )
-                    train_total_ep.value += 1
-                    n_frames += ep_length
-
-                    # Saving metrics to json file for analysis purpose
-                    if train_total_ep.value % args.save_freq == 0:
-                        metrics_to_record['train']['ep_length'].append([train_total_ep.value, ep_length])
-                        metrics_to_record['train']['accuracy'].append([train_total_ep.value, train_result['accuracy']])
-                        metrics_to_record['train']['pickupable_but_not_picked'].append(
-                            [train_total_ep.value, train_result['pickupable_but_not_picked']])
-                        metrics_to_record['train']['picked_but_not_pickupable'].append(
-                            [train_total_ep.value, train_result['picked_but_not_pickupable']])
-                        metrics_to_record['train']['reward'].append([train_total_ep.value, train_result['reward']])
-                        metrics_to_record['train']['dist_to_low_rank'].append(
-                            [train_total_ep.value, train_result['dist_to_low_rank']])
-                        metrics_to_record['train']['invalid_prob_mass'].append(
-                            [train_total_ep.value, train_result['invalid_prob_mass']])
-
-                    if train_total_ep.value > 10000:
-                        old_max_accuracy = max_accuracy
-                        max_accuracy = max(max_accuracy, train_result['accuracy'])
-                        if old_max_accuracy != max_accuracy:
-                            save_best = True
-
-                    if args.enable_logging and train_total_ep.value % train_thin == 0:
-                        tracked_means = train_scalars.pop_and_reset()
-                        for k in tracked_means:
-                            log_writer.add_scalar(
-                                k + "/train", tracked_means[k], train_total_ep.value
-                            )
-                        if train_total_ep.value % (20 * train_thin) == 0:
-                            tracked_tensors = train_tensors.pop_and_reset()
-                            for k in tracked_tensors:
-                                log_writer.add_histogram(
-                                    k + "/train",
-                                    tracked_tensors[k],
-                                    train_total_ep.value,
-                                )
-
-                    if args.enable_logging and train_total_ep.value % (10 * train_thin):
-                        log_writer.add_scalar(
-                            "n_frames", n_frames, train_total_ep.value
-                        )
-
-                if args.enable_logging and args.enable_val_agent:
-                    while not valid_res_queue.empty():
-                        valid_result = valid_res_queue.get()
-                        if len(valid_result) == 0:
+        # TODO: Test Metrics Logging
+        test_thin = 1
+        n_frames = 0
+        try:
+            while (
+                (not experiment.stopping_criteria_reached())
+                and any(p.is_alive() for p in processes)
+                and test_total_ep.value < args.max_ep
+            ):
+                try:
+                    while not test_res_queue.empty():
+                        test_result = test_res_queue.get()
+                        if len(test_result) == 0:
                             continue
+                        ep_length = sum(
+                            test_result[k] for k in test_result if "ep_length" in k
+                        )
+                        n_frames += ep_length
 
-                        if valid_total_ep.value % args.save_freq == 0:
-                            metrics_to_record['valid']['ep_length'].append([valid_total_ep.value, ep_length])
-                            metrics_to_record['valid']['accuracy'].append(
-                                [valid_total_ep.value, valid_result['accuracy']])
-                            metrics_to_record['valid']['pickupable_but_not_picked'].append(
-                                [valid_total_ep.value, valid_result['pickupable_but_not_picked']])
-                            metrics_to_record['valid']['picked_but_not_pickupable'].append(
-                                [valid_total_ep.value, valid_result['picked_but_not_pickupable']])
-                            metrics_to_record['valid']['reward'].append([valid_total_ep.value, valid_result['reward']])
+                        if test_total_ep.value % args.save_freq == 0:
+                            metrics_to_record['test']['ep_length'].append([test_total_ep.value, ep_length])
+                            average_metrics['ep_length'].append(ep_length)
+                            metrics_to_record['test']['accuracy'].append(
+                                [test_total_ep.value, test_result['accuracy']])
+                            average_metrics['accuracy'].append(test_result['accuracy'])
+                            metrics_to_record['test']['pickupable_but_not_picked'].append(
+                                [test_total_ep.value, test_result['pickupable_but_not_picked']])
+                            average_metrics['pickupable_but_not_picked'].append(test_result['pickupable_but_not_picked'])
+                            metrics_to_record['test']['picked_but_not_pickupable'].append(
+                                [test_total_ep.value, test_result['picked_but_not_pickupable']])
+                            average_metrics['picked_but_not_pickupable'].append(test_result['picked_but_not_pickupable'])
+                            metrics_to_record['test']['reward'].append([test_total_ep.value, test_result['reward']])
+                            average_metrics['reward'].append(test_result['reward'])
 
-                        key = list(valid_result.keys())[0].split("/")[0]
-                        valid_total_ep.value += 1
-                        if valid_total_ep.value % valid_thin == 0:
-                            for k in valid_result:
-                                if np.isscalar(valid_result[k]):
+                        key = list(test_result.keys())[0].split("/")[0]
+                        test_total_ep.value += 1
+                        if test_total_ep.value % test_thin == 0:
+                            for k in test_result:
+                                if np.isscalar(test_result[k]):
                                     log_writer.add_scalar(
-                                        k + "/valid",
-                                        valid_result[k],
-                                        train_total_ep.value,
+                                        k + "/test",
+                                        np.mean(average_metrics[k]),
+                                        test_total_ep.value,
                                     )
-                                elif isinstance(valid_result[k], collections.Iterable):
+                                elif isinstance(test_result[k], collections.Iterable):
+                                    log_writer.add_histogram(
+                                        k + "/test",
+                                        np.mean(average_metrics[k]),
+                                        test_total_ep.value,
+                                    )
+                    # Saving extra data (if any)
+                    if save_data_queue is not None:
+                        while True:
+                            try:
+                                experiment.save_episode_summary(
+                                    data_to_save=save_data_queue.get(timeout=0.2)
+                                )
+                            except queue.Empty as _:
+                                break
+                except queue.Empty as _:
+                    pass
+        finally:
+            end_flag.value = True
+            print(
+                "Stopping criteria reached: {}".format(
+                    experiment.stopping_criteria_reached()
+                ),
+                flush=True,
+            )
+            print(
+                "Any workers still alive: {}".format(any(p.is_alive() for p in processes)),
+                flush=True,
+            )
+
+            with open(os.path.join(PROJECT_ROOT_DIR,
+                                   'src/core/output/json_logs/test_metrics_as_json_' + str(time.time()) + '.json'), 'w+',
+                      encoding='UTF-8') as f:
+                f.write(json.dumps(metrics_to_record))
+
+            if args.enable_logging:
+                log_writer.close()
+            for p in processes:
+                p.join(0.1)
+                if p.is_alive():
+                    os.kill(p.pid, signal.SIGTERM)
+
+            end_time = time.time()
+            local_end_time_str = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime(end_time))
+            print(local_start_time_str + " > " + local_end_time_str)
+            print("All done.", flush=True)
+
+    else:
+        end_flag = mp.Value(ctypes.c_bool, False)
+        train_scalars = ScalarMeanTracker()
+        train_tensors = TensorConcatTracker()
+        train_total_ep = mp.Value(
+            ctypes.c_int32, restarted_from_episode if restarted_from_episode else 0
+        )
+
+        train_res_queue = mp.Queue()
+
+        save_data_queue = None if not args.save_extra_data else mp.Queue()
+        episode_init_queue = (
+            None
+            if not args.use_episode_init_queue
+            else experiment.create_episode_init_queue(mp_module=mp)
+        )
+
+        if experiment.stopping_criteria_reached():
+            warnings.warn("Stopping criteria reached before any computations started!")
+            print("All done.")
+            sys.exit()
+
+        for rank in range(0, args.workers):
+            train_experiment = copy.deepcopy(experiment)                            # each worker get's his own experiment
+            train_experiment.init_train_agent.seed = random.randint(0, 10 ** 10)
+            p = mp.Process(
+                target=train,
+                args=(
+                    rank,
+                    args,
+                    shared_model,
+                    train_experiment,
+                    optimizer,
+                    train_res_queue,
+                    end_flag,
+                    train_total_ep,
+                    None,  # Update lock
+                    save_data_queue,
+                    episode_init_queue,
+                ),
+            )
+            p.start()
+            processes.append(p)
+            time.sleep(0.2)
+
+        time.sleep(5)
+
+        valid_res_queue = mp.Queue()
+        valid_total_ep = mp.Value(
+            ctypes.c_int32, restarted_from_episode if restarted_from_episode else 0
+        )
+        if args.enable_val_agent:
+            valid_experiment = copy.deepcopy(experiment)
+            p = mp.Process(
+                target=valid,
+                args=(args, shared_model, valid_experiment, valid_res_queue, end_flag, 0, 1),
+            )
+            p.start()
+            processes.append(p)
+            time.sleep(0.2)
+
+        time.sleep(1)
+
+        train_thin = 500
+        valid_thin = 1
+        n_frames = 0
+        try:
+            while (
+                (not experiment.stopping_criteria_reached())
+                and any(p.is_alive() for p in processes)
+                and train_total_ep.value < args.max_ep
+            ):
+                try:
+                    train_result = train_res_queue.get(timeout=10)
+                    if len(train_result) != 0:
+                        train_scalars.add_scalars(train_result)
+                        train_tensors.add_tensors(train_result)
+                        ep_length = sum(
+                            train_result[k] for k in train_result if "ep_length" in k
+                        )
+                        train_total_ep.value += 1
+                        n_frames += ep_length
+
+                        # Saving metrics to json file for analysis purpose
+                        if train_total_ep.value % args.save_freq == 0:
+                            metrics_to_record['train']['ep_length'].append([train_total_ep.value, ep_length])
+                            metrics_to_record['train']['accuracy'].append([train_total_ep.value, train_result['accuracy']])
+                            metrics_to_record['train']['pickupable_but_not_picked'].append(
+                                [train_total_ep.value, train_result['pickupable_but_not_picked']])
+                            metrics_to_record['train']['picked_but_not_pickupable'].append(
+                                [train_total_ep.value, train_result['picked_but_not_pickupable']])
+                            metrics_to_record['train']['reward'].append([train_total_ep.value, train_result['reward']])
+                            metrics_to_record['train']['dist_to_low_rank'].append(
+                                [train_total_ep.value, train_result['dist_to_low_rank']])
+                            metrics_to_record['train']['invalid_prob_mass'].append(
+                                [train_total_ep.value, train_result['invalid_prob_mass']])
+
+                        if train_total_ep.value > 10000:
+                            old_max_accuracy = max_accuracy
+                            max_accuracy = max(max_accuracy, train_result['accuracy'])
+                            if old_max_accuracy != max_accuracy:
+                                save_best = True
+
+                        if args.enable_logging and train_total_ep.value % train_thin == 0:
+                            tracked_means = train_scalars.pop_and_reset()
+                            for k in tracked_means:
+                                log_writer.add_scalar(
+                                    k + "/train", tracked_means[k], train_total_ep.value
+                                )
+                            if train_total_ep.value % (20 * train_thin) == 0:
+                                tracked_tensors = train_tensors.pop_and_reset()
+                                for k in tracked_tensors:
                                     log_writer.add_histogram(
                                         k + "/train",
-                                        valid_result[k],
+                                        tracked_tensors[k],
                                         train_total_ep.value,
                                     )
 
-                # Saving extra data (if any)
-                if save_data_queue is not None:
-                    while True:
-                        try:
-                            experiment.save_episode_summary(
-                                data_to_save=save_data_queue.get(timeout=0.2)
+                        if args.enable_logging and train_total_ep.value % (10 * train_thin):
+                            log_writer.add_scalar(
+                                "n_frames", n_frames, train_total_ep.value
                             )
-                        except queue.Empty as _:
-                            break
 
-                # Checkpoints
-                if (
-                    train_total_ep.value == args.max_ep
-                    or (train_total_ep.value % args.save_freq) == 0 or save_best
-                ):
-                    if not os.path.exists(args.checkpoints_dir):
-                        os.makedirs(args.checkpoints_dir, exist_ok=True)
+                    if args.enable_logging and args.enable_val_agent:
+                        while not valid_res_queue.empty():
+                            valid_result = valid_res_queue.get()
+                            if len(valid_result) == 0:
+                                continue
 
-                    state_to_save = shared_model.state_dict()
+                            if valid_total_ep.value % args.save_freq == 0:
+                                metrics_to_record['valid']['ep_length'].append([valid_total_ep.value, ep_length])
+                                metrics_to_record['valid']['accuracy'].append(
+                                    [valid_total_ep.value, valid_result['accuracy']])
+                                metrics_to_record['valid']['pickupable_but_not_picked'].append(
+                                    [valid_total_ep.value, valid_result['pickupable_but_not_picked']])
+                                metrics_to_record['valid']['picked_but_not_pickupable'].append(
+                                    [valid_total_ep.value, valid_result['picked_but_not_pickupable']])
+                                metrics_to_record['valid']['reward'].append([valid_total_ep.value, valid_result['reward']])
 
-                    if save_best:
-                        save_path = os.path.join(
-                            args.checkpoints_dir,
-                            "best_{}_{}.dat".format(
-                                train_total_ep.value, local_start_time_str
-                            ),
+                            key = list(valid_result.keys())[0].split("/")[0]
+                            valid_total_ep.value += 1
+                            if valid_total_ep.value % valid_thin == 0:
+                                for k in valid_result:
+                                    if np.isscalar(valid_result[k]):
+                                        log_writer.add_scalar(
+                                            k + "/valid",
+                                            valid_result[k],
+                                            train_total_ep.value,
+                                        )
+                                    elif isinstance(valid_result[k], collections.Iterable):
+                                        log_writer.add_histogram(
+                                            k + "/train",
+                                            valid_result[k],
+                                            train_total_ep.value,
+                                        )
+
+                    # Saving extra data (if any)
+                    if save_data_queue is not None:
+                        while True:
+                            try:
+                                experiment.save_episode_summary(
+                                    data_to_save=save_data_queue.get(timeout=0.2)
+                                )
+                            except queue.Empty as _:
+                                break
+
+                    # Checkpoints
+                    if (
+                        train_total_ep.value == args.max_ep
+                        or (train_total_ep.value % args.save_freq) == 0 or save_best
+                    ):
+                        if not os.path.exists(args.checkpoints_dir):
+                            os.makedirs(args.checkpoints_dir, exist_ok=True)
+
+                        state_to_save = shared_model.state_dict()
+
+                        if save_best:
+                            save_path = os.path.join(
+                                args.checkpoints_dir,
+                                "best_{}_{}.dat".format(
+                                    train_total_ep.value, local_start_time_str
+                                ),
+                            )
+                            save_best = False
+                        else:
+                            save_path = os.path.join(
+                                args.checkpoints_dir,
+                                "{}_{}.dat".format(
+                                    train_total_ep.value, local_start_time_str
+                                ),
+                            )
+                        torch.save(
+                            {
+                                "model_state": shared_model.state_dict(),
+                                "optimizer_state": optimizer.state_dict(),
+                                "episodes": train_total_ep.value,
+                            },
+                            save_path,
                         )
-                        save_best = False
-                    else:
-                        save_path = os.path.join(
-                            args.checkpoints_dir,
-                            "{}_{}.dat".format(
-                                train_total_ep.value, local_start_time_str
-                            ),
-                        )
-                    torch.save(
-                        {
-                            "model_state": shared_model.state_dict(),
-                            "optimizer_state": optimizer.state_dict(),
-                            "episodes": train_total_ep.value,
-                        },
-                        save_path,
-                    )
-            except queue.Empty as _:
-                pass
-    finally:
-        end_flag.value = True
-        print(
-            "Stopping criteria reached: {}".format(
-                experiment.stopping_criteria_reached()
-            ),
-            flush=True,
-        )
-        print(
-            "Any workers still alive: {}".format(any(p.is_alive() for p in processes)),
-            flush=True,
-        )
-        print(
-            "Reached max episodes: {}".format(train_total_ep.value >= args.max_ep),
-            flush=True,
-        )
+                except queue.Empty as _:
+                    pass
+        finally:
+            end_flag.value = True
+            print(
+                "Stopping criteria reached: {}".format(
+                    experiment.stopping_criteria_reached()
+                ),
+                flush=True,
+            )
+            print(
+                "Any workers still alive: {}".format(any(p.is_alive() for p in processes)),
+                flush=True,
+            )
+            print(
+                "Reached max episodes: {}".format(train_total_ep.value >= args.max_ep),
+                flush=True,
+            )
 
-        with open(os.path.join(PROJECT_ROOT_DIR,
-                               'src/core/output/json_logs/train_valid_metrics_as_json_' + str(time.time()) + '.json'), 'w+',
-                  encoding='UTF-8') as f:
-            f.write(json.dumps(metrics_to_record))
+            with open(os.path.join(PROJECT_ROOT_DIR,
+                                   'src/core/output/json_logs/train_valid_metrics_as_json_' + str(time.time()) + '.json'), 'w+',
+                      encoding='UTF-8') as f:
+                f.write(json.dumps(metrics_to_record))
 
-        if args.enable_logging:
-            log_writer.close()
-        for p in processes:
-            p.join(0.1)
-            if p.is_alive():
-                os.kill(p.pid, signal.SIGTERM)
+            if args.enable_logging:
+                log_writer.close()
+            for p in processes:
+                p.join(0.1)
+                if p.is_alive():
+                    os.kill(p.pid, signal.SIGTERM)
 
-        end_time = time.time()
-        local_end_time_str = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime(end_time))
-        print(local_start_time_str + " > " + local_end_time_str)
-        print("All done.", flush=True)
+            end_time = time.time()
+            local_end_time_str = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime(end_time))
+            print(local_start_time_str + " > " + local_end_time_str)
+            print("All done.", flush=True)

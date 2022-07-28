@@ -173,7 +173,7 @@ def start_local_training(**kwargs):
 @click.option('-d', '--checkpoints_dir', is_flag=False, type=str, default='output/checkpoints/', show_default=True, help='Folder for trained checkpoints')
 @click.option('-c', '--use_checkpoint', is_flag=False, type=str, default='', show_default=True, help='Checkpoint to resume training from')
 @click.option('-e', '--max_ep', is_flag=False, type=float, default='inf', show_default=True, help='Maximum number of episodes')
-@click.option('-v', '--visualize_test_agent', is_flag=False, type=bool, default=False, show_default=True, help='Create plots and graphics for test agent')
+@click.option('-v', '--visualize_test_agent', is_flag=False, type=bool, default=False, show_default=True, help='Create plots and graphics for valid agent')
 @click.option('-q', '--use_episode_init_queue', is_flag=False, type=bool, default=False, show_default=True, help='Necessary when evaluating models on fixed datasets')
 def hummel(**kwargs):
     """Run AAM on Hummel"""

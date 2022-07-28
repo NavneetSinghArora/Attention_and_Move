@@ -40,6 +40,7 @@ class FurnLiftBaseConfig(ExperimentConfig, ABC):
     dagger_mode = True
     train_scenes = CONSTANTS.TRAIN_SCENE_NAMES
     valid_scenes = CONSTANTS.VALID_SCENE_NAMES
+    test_scenes = CONSTANTS.TEST_SCENE_NAMES
     use_a3c_loss_when_not_expert_forcing = True
 
     # Misc (e.g. visualization)
@@ -74,12 +75,22 @@ class FurnLiftBaseConfig(ExperimentConfig, ABC):
             init_valid_params["save_talk_reply_probs_path"] = cls.save_talk_reply_probs_path
         return init_valid_params
 
+    @classmethod
+    def get_init_test_params(cls):
+        init_test_params = {**cls.get_init_train_params(), "scenes": cls.test_scenes, "max_ep_using_expert_actions": 0}
+        if cls.save_talk_reply_probs_path is not None:
+            init_test_params["save_talk_reply_probs_path"] = cls.save_talk_reply_probs_path
+        return init_test_params
+
     def __init__(self):
         self._init_train_agent = self.episode_sampler_class(
             **self.get_init_train_params()
         )
-        self._init_test_agent = self.episode_sampler_class(
+        self._init_valid_agent = self.episode_sampler_class(
             **self.get_init_valid_params()
+        )
+        self._init_test_agent = self.episode_sampler_class(
+            **self.get_init_test_params()
         )
 
     @classmethod
@@ -98,6 +109,10 @@ class FurnLiftBaseConfig(ExperimentConfig, ABC):
     @property
     def init_train_agent(self) -> Callable:
         return self._init_train_agent
+
+    @property
+    def init_valid_agent(self) -> Callable:
+        return self._init_valid_agent
 
     @property
     def init_test_agent(self) -> Callable:

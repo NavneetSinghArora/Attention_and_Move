@@ -25,6 +25,10 @@ class ExperimentConfig(abc.ABC):
         raise NotImplementedError()
 
     @property
+    def init_valid_agent(self) -> Callable:
+        raise NotImplementedError()
+
+    @property
     def init_test_agent(self) -> Callable:
         raise NotImplementedError()
 

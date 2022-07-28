@@ -288,7 +288,7 @@ class FurnLiftEpisodeSamplers(object):
             scene_successfully_setup = False
             failure_reasons = []
             for _ in range(10):
-                if self.runtime_properties['static_scene_type'] == 'False':
+                if self.runtime_properties['static_scene_type'] == 'False' and self.runtime_properties['enable_test_agent'] != 'True':
                     env.step(
                         {
                             "action": "DisableAllObjectsOfType",
@@ -321,7 +321,7 @@ class FurnLiftEpisodeSamplers(object):
                         partial_position={"horizon": 0},
                         only_initially_reachable=True,
                     )
-                if self.runtime_properties['static_scene_type'] == 'False':
+                if self.runtime_properties['static_scene_type'] == 'False' and self.runtime_properties['enable_test_agent'] != 'True':
                     env.step(
                         {
                             "action": "RandomlyCreateAndPlaceObjectOnFloor",
