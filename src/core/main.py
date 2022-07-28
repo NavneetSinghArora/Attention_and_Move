@@ -96,11 +96,21 @@ if __name__ == "__main__":
 
     if args.enable_logging:
         # Caching current state of the project
+        cur_model_img = args.image_features
+        if args.text_features:
+            cur_model_text = "with_text"
+        else:
+            cur_model_text = "without_text"
+        if args.static_scene_type:
+            cur_scene_type = "static"
+        else:
+            cur_scene_type = "dynamic"
+
         log_file_path = save_project_state_in_log(sys.argv,
-            local_start_time_str,
-            experiment.checkpoints_dir,
-            experiment.use_checkpoint,
-            args.log_dir
+            cur_model_img,
+            cur_model_text,
+            cur_scene_type,
+            local_start_time_str
         )
         # Create a tensorboard logger
         log_writer = SummaryWriter(log_file_path)
@@ -283,9 +293,18 @@ if __name__ == "__main__":
                 "Any workers still alive: {}".format(any(p.is_alive() for p in processes)),
                 flush=True,
             )
+            cur_model_img = args.image_features
+            if args.text_features:
+                cur_model_text = "with_text"
+            else:
+                cur_model_text = "without_text"
+            if args.static_scene_type:
+                cur_scene_type = "static"
+            else:
+                cur_scene_type = "dynamic"
 
             with open(os.path.join(PROJECT_ROOT_DIR,
-                                   'src/core/output/json_logs/test_metrics_as_json_' + str(time.time()) + '.json'), 'w+',
+                                   'src/core/output/json_logs/test_metrics_as_json_'+ cur_model_img + "_" + cur_model_text + "_" + cur_scene_type + "_" + time.strftime("%Y-%m-%d_%H-%M-%S", time.time()) + '.json'), 'w+',
                       encoding='UTF-8') as f:
                 f.write(json.dumps(metrics_to_record))
 
@@ -476,20 +495,29 @@ if __name__ == "__main__":
                             os.makedirs(args.checkpoints_dir, exist_ok=True)
 
                         state_to_save = shared_model.state_dict()
+                        cur_model_img = args.image_features
+                        if args.text_features:
+                            cur_model_text = "with_text"
+                        else:
+                            cur_model_text = "without_text"
+                        if args.static_scene_type:
+                            cur_scene_type = "static"
+                        else:
+                            cur_scene_type = "dynamic"
 
                         if save_best:
                             save_path = os.path.join(
                                 args.checkpoints_dir,
-                                "best_{}_{}.dat".format(
-                                    train_total_ep.value, local_start_time_str
+                                "best_{}_{}_{}_{}_{}.dat".format(
+                                    train_total_ep.value, cur_model_img, cur_model_text, cur_scene_type, local_start_time_str
                                 ),
                             )
                             save_best = False
                         else:
                             save_path = os.path.join(
                                 args.checkpoints_dir,
-                                "{}_{}.dat".format(
-                                    train_total_ep.value, local_start_time_str
+                                "{}_{}_{}_{}_{}.dat".format(
+                                    train_total_ep.value, cur_model_img, cur_model_text, cur_scene_type, local_start_time_str
                                 ),
                             )
                         torch.save(
@@ -518,9 +546,18 @@ if __name__ == "__main__":
                 "Reached max episodes: {}".format(train_total_ep.value >= args.max_ep),
                 flush=True,
             )
+            cur_model_img = args.image_features
+            if args.text_features:
+                cur_model_text = "with_text"
+            else:
+                cur_model_text = "without_text"
+            if args.static_scene_type:
+                cur_scene_type = "static"
+            else:
+                cur_scene_type = "dynamic"
 
             with open(os.path.join(PROJECT_ROOT_DIR,
-                                   'src/core/output/json_logs/train_valid_metrics_as_json_' + str(time.time()) + '.json'), 'w+',
+                                   'src/core/output/json_logs/train_valid_metrics_as_json_'+ cur_model_img + "_" + cur_model_text + "_" + cur_scene_type + "_" + time.strftime("%Y-%m-%d_%H-%M-%S", time.time()) + '.json'), 'w+',
                       encoding='UTF-8') as f:
                 f.write(json.dumps(metrics_to_record))
 
