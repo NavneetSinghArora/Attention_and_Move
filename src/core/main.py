@@ -296,8 +296,9 @@ if __name__ == "__main__":
             else:
                 cur_scene_type = "dynamic"
 
+            cur_time_str = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime(time.time()))
             with open(os.path.join(PROJECT_ROOT_DIR,
-                                   'src/core/output/json_logs/test_metrics_as_json_'+ cur_model_img + "_" + cur_model_text + "_" + cur_scene_type + "_" + time.strftime("%Y-%m-%d_%H-%M-%S", time.time()) + '.json'), 'w+',
+                                   'src/core/output/json_logs/test_metrics_as_json_'+ cur_model_img + "_" + cur_model_text + "_" + cur_scene_type + "_" + cur_time_str + '.json'), 'w+',
                       encoding='UTF-8') as f:
                 f.write(json.dumps(metrics_to_record))
 
@@ -549,8 +550,9 @@ if __name__ == "__main__":
             else:
                 cur_scene_type = "dynamic"
 
+            cur_time_str = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime(time.time()))
             with open(os.path.join(PROJECT_ROOT_DIR,
-                                   'src/core/output/json_logs/train_valid_metrics_as_json_'+ cur_model_img + "_" + cur_model_text + "_" + cur_scene_type + "_" + time.strftime("%Y-%m-%d_%H-%M-%S", time.time()) + '.json'), 'w+',
+                                   'src/core/output/json_logs/train_valid_metrics_as_json_'+ cur_model_img + "_" + cur_model_text + "_" + cur_scene_type + "_" + cur_time_str + '.json'), 'w+',
                       encoding='UTF-8') as f:
                 f.write(json.dumps(metrics_to_record))
 
