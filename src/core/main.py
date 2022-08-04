@@ -190,9 +190,15 @@ if __name__ == "__main__":
         average_metrics = {
             'accuracy': [],
             'ep_length': [],
-            'pickupable_but_not_picked': [],
+            'final_manhattan_distance_from_target': [],
+            'initial_manhattan_steps': [],
+            'invalid_prob_mass': [],
+            'picked_but_not_pickupable_distance': [],
             'picked_but_not_pickupable': [],
-            'reward': []
+            'picked_but_not_pickupable_visibility': [],
+            'pickupable_but_not_picked': [],
+            'reward': [],
+            'spl_manhattan': []
         }
 
         # Creating the basic test configuration
@@ -246,6 +252,17 @@ if __name__ == "__main__":
                             average_metrics['picked_but_not_pickupable'].append(test_result['picked_but_not_pickupable'])
                             metrics_to_record['test']['reward'].append([test_total_ep.value, test_result['reward']])
                             average_metrics['reward'].append(test_result['reward'])
+                            metrics_to_record['test']['picked_but_not_pickupable_distance'].append([test_total_ep.value, test_result['picked_but_not_pickupable_distance']])
+                            average_metrics['picked_but_not_pickupable_distance'].append(test_result['picked_but_not_pickupable_distance'])
+                            metrics_to_record['test']['picked_but_not_pickupable_visibility'].append(
+                                [test_total_ep.value, test_result['picked_but_not_pickupable_visibility']])
+                            average_metrics['picked_but_not_pickupable_visibility'].append(
+                                test_result['picked_but_not_pickupable_visibility'])
+
+                            metrics_to_record['test']['spl_manhattan'].append(
+                                [test_total_ep.value, test_result['spl_manhattan']])
+                            average_metrics['spl_manhattan'].append(
+                                test_result['spl_manhattan'])
 
                         key = list(test_result.keys())[0].split("/")[0]
                         test_total_ep.value += 1
