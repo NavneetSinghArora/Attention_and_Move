@@ -60,29 +60,40 @@ def get_object_found_percentage(similarity, object_classes):
 
 
 class ClipObjectDetection:
+
+    __instance = None
+    __instance_created = False
+
     def __init__(self, global_properties, simulator_properties):
-        self.object_classes = simulator_properties['object_classes']
-        self.best_validation_loss = None
-        self.scheduler = None
-        self.optimiser = None
-        self.global_properties = global_properties
-        self.simulator_properties = simulator_properties
-        torch.cuda.set_device(int(self.global_properties['gpu']))
-        self.device = "cuda:" + self.global_properties['gpu'] if torch.cuda.is_available() else "cpu"
-        self.model, self.preprocess = clip.load("ViT-B/32", device=self.device, jit=False)
-        self.training_data_path = ''
-        self.validation_data_path = ''
-        self.testing_data_path = ''
-        self.learning_rate = 1e-2
-        self.momentum = 0.2
-        self.criterion = CrossEntropyLoss()
-        # self.criterion = TripletMarginWithDistanceLoss()
-        self.tokenizer = SimpleTokenizer()
-        self.n = 0
-        self.mean = 0
-        self.batch_size = 32
-        self.number_of_epochs = 30
-        self.freeze_layers = self.global_properties['frozen']
+        if not self.__instance_created:
+            self.object_classes = simulator_properties['object_classes']
+            self.best_validation_loss = None
+            self.scheduler = None
+            self.optimiser = None
+            self.global_properties = global_properties
+            self.simulator_properties = simulator_properties
+            torch.cuda.set_device(int(self.global_properties['gpu']))
+            self.device = "cuda:" + self.global_properties['gpu'] if torch.cuda.is_available() else "cpu"
+            self.model, self.preprocess = clip.load("ViT-B/32", device=self.device, jit=False)
+            self.training_data_path = ''
+            self.validation_data_path = ''
+            self.testing_data_path = ''
+            self.learning_rate = 1e-2
+            self.momentum = 0.2
+            self.criterion = CrossEntropyLoss()
+            # self.criterion = TripletMarginWithDistanceLoss()
+            self.tokenizer = SimpleTokenizer()
+            self.n = 0
+            self.mean = 0
+            self.batch_size = 32
+            self.number_of_epochs = 30
+            self.freeze_layers = self.global_properties['frozen']
+            self.__instance_created = True
+
+    def __new__(cls, *args, **kwargs):
+        if cls.__instance is None:
+            cls.__instance = object.__new__(cls)
+        return cls.__instance
 
     def reset_rolling_mean(self):
         self.n = 0
