@@ -89,6 +89,8 @@ class ClipObjectDetection:
             self.number_of_epochs = 30
             self.freeze_layers = self.global_properties['frozen']
             self.__instance_created = True
+            self.text = None
+            self.texts_features = None
 
     def __new__(cls, *args, **kwargs):
         if cls.__instance is None:
@@ -425,10 +427,11 @@ class ClipObjectDetection:
     def get_encoding(self, images, use_text_features=False):
         with torch.no_grad():
             images_features = self.model.encode_image(images.to(self.device))
-            if use_text_features == 'True':
-                text = torch.cat([self.tokenize(c) for c in self.object_classes]).to(self.device)
-                texts_features = self.model.encode_text(text.to(self.device))
+            if self.text is None or self.texts_features is None:
+                self.text = torch.cat([self.tokenize(c) for c in self.object_classes]).to(self.device)
+                self.texts_features = self.model.encode_text(self.text.to(self.device))
+
         if use_text_features == 'True':
-            return images_features @ texts_features.T
+            return images_features @ self.texts_features.T
         else:
             return images_features
