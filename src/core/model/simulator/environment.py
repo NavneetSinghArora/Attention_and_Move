@@ -2,6 +2,7 @@
 
 from ai2thor.controller import Controller
 from src.core.model.object_detection.clip_detection import ClipObjectDetection
+from ai2thor.platform import CloudRendering, Linux64, OSXIntel64
 import random
 import sys
 

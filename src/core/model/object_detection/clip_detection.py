@@ -142,21 +142,21 @@ class ClipObjectDetection:
             df = pd.DataFrame()
             image_count = 0
             for i in range(len(images)):
-                # if i % 6 == 0:
-                image_count += 1
-                targets_encoding = np.zeros(len(self.object_classes))
-                # if image_count % 1000 == 0:
-                #     print(f"Processing {dataset_type} Image : {image_count}")
-                targets, texts = self.get_annotation_label(
-                    '/export2/scratch/cv_proj_team1/Attention_and_Move/output/dataset/' + dataset_type + '/annotations/' +
-                    annotations[i], object_classes)
-                text = torch.cat([self.tokenize(c) for c in self.object_classes])
-                for j in range(len(targets)):
-                    targets_encoding[targets[j]] = 1
-                #     df = df.append({'images': images[i], 'targets': targets[j], 'texts': self.tokenize(texts[j])}, ignore_index=True)
-                df = df.append({'images': images[i], 'targets': targets_encoding, 'texts': text}, ignore_index=True)
+                if i % 6 == 0:
+                    image_count += 1
+                    targets_encoding = np.zeros(len(self.object_classes))
+                    if image_count % 1000 == 0:
+                        print(f"Processing {dataset_type} Image : {image_count}")
+                    targets, texts = self.get_annotation_label(
+                        '/export2/scratch/cv_proj_team1/Attention_and_Move/output/dataset/' + dataset_type + '/annotations/' +
+                        annotations[i], object_classes)
+                    text = torch.cat([self.tokenize(c) for c in self.object_classes])
+                    for j in range(len(targets)):
+                        targets_encoding[targets[j]] = 1
+                    #     df = df.append({'images': images[i], 'targets': targets[j], 'texts': self.tokenize(texts[j])}, ignore_index=True)
+                    df = df.append({'images': images[i], 'targets': targets_encoding, 'texts': text}, ignore_index=True)
 
-                bar.update()
+                    bar.update()
 
             return df
 
@@ -190,8 +190,8 @@ class ClipObjectDetection:
         testing_dataset = SimulatorDataset(testing_df, self.preprocess, 'testing')
         testing_dataloader = DataLoader(testing_dataset, batch_size=self.batch_size, shuffle=True)
 
-        # return training_dataloader, validation_dataloader, testing_dataloader
-        return testing_dataloader
+        return training_dataloader, validation_dataloader, testing_dataloader
+        # return testing_dataloader
 
     def train(self, training_dataloader, epoch):
         if self.global_properties['checkpoint'] is not None:
