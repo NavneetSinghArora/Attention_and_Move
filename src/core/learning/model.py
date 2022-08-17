@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from src.core.utils.misc import norm_col_init, weights_init, outer_product, outer_sum
 from src.core.model.object_detection.clip_detection import ClipObjectDetection
+# from src.core.model.object_detection.clip_prediction import get_clip_encoding
 
 import clip
 import torch
@@ -266,8 +267,7 @@ class Model(nn.Module):
             self.reply_symbol_classifier.weight.data, 0.01
         )
         self.reply_symbol_classifier.bias.data.fill_(0)
-        self.clip_object_detection_obj = ClipObjectDetection(self.global_properties,
-                                    self.simulator_properties)
+
         self.train()
 
     def forward(
@@ -280,7 +280,11 @@ class Model(nn.Module):
         if self.runtime_properties['image_features'] == 'CLIP':
             if inputs.shape != (self.num_agents, self.num_inputs_per_agent, 224, 224):
                 raise Exception("input to model is not as expected, check!")
-            x = self.clip_object_detection_obj.get_encoding(inputs, self.runtime_properties['text_features'])
+            # x = get_clip_encoding(inputs)
+            x = \
+                ClipObjectDetection(self.global_properties,
+                                    self.simulator_properties).get_encoding(inputs,
+                                                                            self.runtime_properties['text_features'])
         else:
             if inputs.shape != (self.num_agents, self.num_inputs_per_agent, 84, 84):
                 raise Exception("input to model is not as expected, check!")

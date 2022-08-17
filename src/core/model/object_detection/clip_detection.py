@@ -75,6 +75,8 @@ class ClipObjectDetection:
             torch.cuda.set_device(int(self.global_properties['gpu']))
             self.device = "cuda:" + self.global_properties['gpu'] if torch.cuda.is_available() else "cpu"
             self.model, self.preprocess = clip.load("ViT-B/32", device=self.device, jit=False)
+            checkpoint = torch.load('/export/home/0usmanov/Desktop/Master/Attention_and_Move/checkpoints/clip_model/best_checkpoint/frozen_clip_best.ckpt')
+            self.model.load_state_dict(checkpoint['model_state_dict'])
             self.training_data_path = ''
             self.validation_data_path = ''
             self.testing_data_path = ''
@@ -88,9 +90,9 @@ class ClipObjectDetection:
             self.batch_size = 32
             self.number_of_epochs = 30
             self.freeze_layers = self.global_properties['frozen']
-            self.__instance_created = True
             self.text = None
-            self.texts_features = None
+            self.text_features = None
+            self.__instance_created = True
 
     def __new__(cls, *args, **kwargs):
         if cls.__instance is None:
@@ -427,11 +429,11 @@ class ClipObjectDetection:
     def get_encoding(self, images, use_text_features=False):
         with torch.no_grad():
             images_features = self.model.encode_image(images.to(self.device))
-            if self.text is None or self.texts_features is None:
+            if use_text_features == 'True' and (self.text is None or self.text_features is None):
                 self.text = torch.cat([self.tokenize(c) for c in self.object_classes]).to(self.device)
-                self.texts_features = self.model.encode_text(self.text.to(self.device))
+                self.text_features = self.model.encode_text(self.text).to(self.device)
 
         if use_text_features == 'True':
-            return images_features @ self.texts_features.T
+            return images_features @ self.text_features.T
         else:
             return images_features
